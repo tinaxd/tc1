@@ -18,6 +18,7 @@ struct Token {
     Token *next;
     int val; // when TK_NUM
     char *str;
+    int len;
 };
 
 // Kinds of AST nodes
@@ -67,8 +68,8 @@ void error_at(char *loc, char *fmt, ...) {
 
 // Advances a token and returns true when the next token is one of expected symbols.
 // Returns false otherwise
-bool consume(char op) {
-    if (token->kind != TK_RESERVED || token->str[0] != op)
+bool consume(char *op) {
+    if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len))
         return false;
     token = token->next;
     return true;
@@ -76,8 +77,8 @@ bool consume(char op) {
 
 // Advances a token when the next token is a number.
 // Reports an error otherwise.
-void expect(char op) {
-    if (token->kind != TK_RESERVED || token->str[0] != op)
+void expect(char *op) {
+    if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len))
         error_at(token->str, "not '%c'", op);
     token = token->next;
 }
@@ -97,11 +98,12 @@ bool at_eof() {
 }
 
 // Creates a new token and links it next to cur.
-Token *new_token(TokenKind kind, Token *cur, char *str) {
+Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
     Token *tok = calloc(1, sizeof(Token));
     tok->kind = kind;
     tok->str = str;
     cur->next = tok;
+    tok->len = len;
     return tok;
 }
 
@@ -136,9 +138,9 @@ Node *expr() {
     Node *node = mul();
     
     while (true) {
-        if (consume('+'))
+        if (consume("+"))
             node = new_node(ND_ADD, node, mul());
-        else if (consume('-'))
+        else if (consume("-"))
             node = new_node(ND_SUB, node, mul());
         else
             return node;
@@ -149,9 +151,9 @@ Node *mul() {
     Node *node = unary();
 
     while (true) {
-        if (consume('*'))
+        if (consume("*"))
             node = new_node(ND_MUL, node, unary());
-        else if (consume('/'))
+        else if (consume("/"))
             node = new_node(ND_DIV, node, unary());
         else
             return node;
@@ -159,17 +161,17 @@ Node *mul() {
 }
 
 Node *unary() {
-    if (consume('+'))
+    if (consume("+"))
         return primary();
-    if (consume('-'))
+    if (consume("-"))
         return new_node(ND_SUB, new_node_num(0), primary());
     return primary();
 }
 
 Node *primary() {
-    if (consume('(')) {
+    if (consume("(")) {
         Node *node = expr();
-        expect(')');
+        expect(")");
         return node;
     }
 
@@ -220,20 +222,24 @@ Token *tokenize(char *p) {
         }
 
         if (*p == '+' || *p == '-' || *p == '*' || *p == '/' || *p == '(' || *p == ')') {
-            cur = new_token(TK_RESERVED, cur, p++);
+            cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
         }
 
         if (isdigit(*p)) {
-            cur = new_token(TK_NUM, cur, p);
-            cur->val = strtol(p, &p, 10);
+            char *oldP = p;
+            int val = strtol(oldP, &p, 10);
+            int len = p - oldP;
+
+            cur = new_token(TK_NUM, cur, p, len);
+            cur->val = val;
             continue;
         }
 
         error_at(p, "cannot tokenize");
     }
 
-    new_token(TK_EOF, cur, p);
+    new_token(TK_EOF, cur, p, 0);
     return head.next;
 }
 
