@@ -50,5 +50,11 @@ assert 2 "if(1) return 2; else return 3;"
 assert 3 "if(0) return 2; else return 3;"
 assert 3 "while(1) return 3; return 2;"
 assert 2 "while(0) return 3; return 2;"
+assert 4 "for(i=0; i<6; i=i+1) i=i; 4;"
+assert 3 "for(i=0; i<6; i=i+1) if(i == 3) return i; 4;"
+assert 100 "for(i=0; i<6; i=i+1) if(i==5) return 100; i;"
+assert 7 "for(i=0; i<6; i=i+1) if(i==6) return 100; 7;"
+assert 3 "for(i=0; i<6; ) if((i=i+1) == 3) return i; 4;"
+assert 100 "for(;;) return 100; return 50;"
 
 echo OK

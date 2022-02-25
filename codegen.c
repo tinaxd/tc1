@@ -86,6 +86,33 @@ void gen(Node *node) {
         printf("%s:\n", end_label);
         return;
     }
+    case ND_FOR: {
+        char *begin_label = malloc(10);
+        char *end_label = malloc(10);
+        gen_unique_label(begin_label);
+        gen_unique_label(end_label);
+        if (node->children[0] != NULL) {
+            gen(node->children[0]);
+        }
+        printf("%s:\n", begin_label);
+        if (node->children[1] != NULL) {
+            gen(node->children[1]);
+        } else {
+            printf("    mov rax, 1\n");
+            printf("    push rax\n");
+        }
+        printf("    pop rax\n");
+        printf("    cmp rax, 0\n");
+        printf("    je %s\n", end_label);
+        gen(node->children[3]);
+        if (node->children[2] != NULL) {
+            gen(node->children[2]);
+            printf("    pop rax\n");
+        }
+        printf("    jmp %s\n", begin_label);
+        printf("%s:\n", end_label);
+        return;
+    }
     }
 
     gen(node->lhs);

@@ -6,6 +6,7 @@ typedef enum {
     TK_IF,
     TK_ELSE,
     TK_WHILE,
+    TK_FOR,
     TK_EOF,
 } TokenKind;
 
@@ -34,8 +35,9 @@ typedef enum {
     ND_ASSIGN, // =
     ND_NUM, // integer
     ND_RETURN, // return
-    ND_IF, // if
-    ND_WHILE, // while
+    ND_IF, // if n_children==2 or 3
+    ND_WHILE, // while n_children==2
+    ND_FOR, // for n_children==4
     ND_LVAR, // local variable
 } NodeKind;
 

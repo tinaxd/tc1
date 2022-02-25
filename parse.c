@@ -78,7 +78,7 @@ int expect_number() {
 Token *expect_ident() {
     if (token->kind != TK_IDENT)
         error_at(token->str, "not an ident: '%s'", token->str);
-    char *val = token;
+    Token *val = token;
     token = token->next;
     return val;
 }
@@ -144,6 +144,7 @@ stmt       = expr ";"
            | "return" expr ";"
            | "if" "(" expr ")" stmt ("else" stmt)?
            | "while" "(" expr ")" stmt
+           | "for (expr?; expr?; expr?) stmt"
 expr       = assign
 assign     = equality ("=" assign)?
 equality   = relational ("==" relational | "!=" relational)*
@@ -202,6 +203,32 @@ Node *stmt() {
         node->children[0] = n1;
         node->children[1] = n2;
         node->n_children = 2;
+    } else if (consume_kind(TK_FOR)) {
+        expect("(");
+        Node *n1 = NULL;
+        Node *n2 = NULL;
+        Node *n3 = NULL;
+        if (!consume(";")) {
+            n1 = expr();
+            expect(";");
+        }
+        if (!consume(";")) {
+            n2 = expr();
+            expect(";");
+        }
+        if (!consume(")")) {
+            n3 = expr();
+            expect(")");
+        }
+        Node *n4 = stmt();
+
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_FOR;
+        node->children[0] = n1;
+        node->children[1] = n2;
+        node->children[2] = n3;
+        node->children[3] = n4;
+        node->n_children = 4;
     } else if (consume_kind(TK_RETURN)) {
         node = calloc(1, sizeof(Node));
         node->kind = ND_RETURN;
@@ -376,6 +403,13 @@ Token *tokenize(char *p) {
         if (strncmp(p, "while", 5) == 0 && !is_alnum(p[5])) {
             cur = new_token(TK_WHILE, cur, p, 5);
             p += 5;
+            continue;
+        }
+
+        // for keyword
+        if (strncmp(p, "for", 3) == 0 && !is_alnum(p[3])) {
+            cur = new_token(TK_FOR, cur, p, 3);
+            p += 3;
             continue;
         }
 
