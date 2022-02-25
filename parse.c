@@ -142,7 +142,7 @@ Node *new_node_lvar(Token *tok) {
 program    = stmt*
 stmt       = expr ";"
            | "return" expr ";"
-           | "if" "(" expr ")" stmt
+           | "if" "(" expr ")" stmt ("else" stmt)?
 expr       = assign
 assign     = equality ("=" assign)?
 equality   = relational ("==" relational | "!=" relational)*
@@ -172,11 +172,24 @@ Node *stmt() {
         expect(")");
         Node *n2 = stmt();
 
+        // else clause
+        Node *n3 = NULL;
+        if (consume_kind(TK_ELSE)) {
+            n3 = stmt();
+        }
+
         node = calloc(1, sizeof(Node));
         node->kind = ND_IF;
         node->children[0] = n1;
         node->children[1] = n2;
-        node->n_children = 2;
+        if (n3 == NULL) {
+            // without else clause
+            node->n_children = 2;
+        } else {
+            // with else clause
+            node->children[2] = n3;
+            node->n_children = 3;
+        }
     } else if (consume_kind(TK_RETURN)) {
         node = calloc(1, sizeof(Node));
         node->kind = ND_RETURN;
@@ -337,6 +350,13 @@ Token *tokenize(char *p) {
         if (strncmp(p, "if", 2) == 0 && !is_alnum(p[2])) {
             cur = new_token(TK_IF, cur, p, 2);
             p += 2;
+            continue;
+        }
+
+        // else keyword
+        if (strncmp(p, "else", 4) == 0 && !is_alnum(p[4])) {
+            cur = new_token(TK_ELSE, cur, p, 4);
+            p += 4;
             continue;
         }
 

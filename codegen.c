@@ -3,7 +3,7 @@
 
 static void gen_unique_label(char *str) {
     static int number = 0;
-    sprintf(str, ".Lend%d", number++);
+    sprintf(str, ".L%d", number++);
 }
 
 static void gen_lval(Node *node) {
@@ -48,12 +48,26 @@ void gen(Node *node) {
         gen(node->children[0]);
         printf("    pop rax\n");
         printf("    cmp rax, 0\n");
-        char *label = malloc(10);
-        gen_unique_label(label);
-        printf("    je %s\n", label);
-        // gen statement
-        gen(node->children[1]);
-        printf("%s:\n", label);
+        char *end_label = malloc(10);
+        gen_unique_label(end_label);
+        if (node->n_children == 2) {
+            // without else clause
+            printf("    je %s\n", end_label);
+            // gen statement
+            gen(node->children[1]);
+            printf("%s:\n", end_label);
+        } else {
+            // with else clause
+            char *else_label = malloc(10);
+            gen_unique_label(else_label);
+            // gen statement
+            printf("    je %s\n", else_label);
+            gen(node->children[1]);
+            printf("    jmp %s\n", end_label);
+            printf("%s:\n", else_label);
+            gen(node->children[2]);
+            printf("%s:\n", end_label);
+        }
         return;
     }
 
