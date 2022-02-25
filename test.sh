@@ -30,5 +30,8 @@ assert 0 '1>=2;'
 assert 42 "42;"
 assert 2 "a=b=2;"
 assert 5 "a=2;b=3;a+b;"
+assert 5 "a=1;b=3+1;a+b;"
+assert 5 "foo=2; bar=3; foo+bar;"
+assert 5 "foo=1;bar=3+1;foo+bar;"
 
 echo OK
