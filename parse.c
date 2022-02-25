@@ -143,6 +143,7 @@ program    = stmt*
 stmt       = expr ";"
            | "return" expr ";"
            | "if" "(" expr ")" stmt ("else" stmt)?
+           | "while" "(" expr ")" stmt
 expr       = assign
 assign     = equality ("=" assign)?
 equality   = relational ("==" relational | "!=" relational)*
@@ -190,6 +191,17 @@ Node *stmt() {
             node->children[2] = n3;
             node->n_children = 3;
         }
+    } else if (consume_kind(TK_WHILE)) {
+        expect("(");
+        Node *n1 = expr();
+        expect(")");
+        Node *n2 = stmt();
+
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_WHILE;
+        node->children[0] = n1;
+        node->children[1] = n2;
+        node->n_children = 2;
     } else if (consume_kind(TK_RETURN)) {
         node = calloc(1, sizeof(Node));
         node->kind = ND_RETURN;
@@ -357,6 +369,13 @@ Token *tokenize(char *p) {
         if (strncmp(p, "else", 4) == 0 && !is_alnum(p[4])) {
             cur = new_token(TK_ELSE, cur, p, 4);
             p += 4;
+            continue;
+        }
+
+        // while keyword
+        if (strncmp(p, "while", 5) == 0 && !is_alnum(p[5])) {
+            cur = new_token(TK_WHILE, cur, p, 5);
+            p += 5;
             continue;
         }
 

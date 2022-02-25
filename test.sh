@@ -48,5 +48,7 @@ assert 2 "if(1) 2; else 3;"
 assert 3 "if(0) 2; else 3;"
 assert 2 "if(1) return 2; else return 3;"
 assert 3 "if(0) return 2; else return 3;"
+assert 3 "while(1) return 3; return 2;"
+assert 2 "while(0) return 3; return 2;"
 
 echo OK

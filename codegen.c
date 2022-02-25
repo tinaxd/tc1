@@ -1,5 +1,6 @@
 #include "tc1.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 static void gen_unique_label(char *str) {
     static int number = 0;
@@ -43,7 +44,7 @@ void gen(Node *node) {
         printf("    pop rbp\n");
         printf("    ret\n");
         return;
-    case ND_IF:
+    case ND_IF: {
         // gen condition
         gen(node->children[0]);
         printf("    pop rax\n");
@@ -69,6 +70,22 @@ void gen(Node *node) {
             printf("%s:\n", end_label);
         }
         return;
+    }
+    case ND_WHILE: {
+        char *begin_label = malloc(10);
+        char *end_label = malloc(10);
+        gen_unique_label(begin_label);
+        gen_unique_label(end_label);
+        printf("%s:\n", begin_label);
+        gen(node->children[0]);
+        printf("    pop rax\n");
+        printf("    cmp rax, 0\n");
+        printf("    je %s\n", end_label);
+        gen(node->children[1]);
+        printf("    jmp %s\n", begin_label);
+        printf("%s:\n", end_label);
+        return;
+    }
     }
 
     gen(node->lhs);
