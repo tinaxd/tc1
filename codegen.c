@@ -82,6 +82,7 @@ void gen(Node *node) {
         printf("    cmp rax, 0\n");
         printf("    je %s\n", end_label);
         gen(node->children[1]);
+        // TODO: need to pop?
         printf("    jmp %s\n", begin_label);
         printf("%s:\n", end_label);
         return;
@@ -111,6 +112,13 @@ void gen(Node *node) {
         }
         printf("    jmp %s\n", begin_label);
         printf("%s:\n", end_label);
+        return;
+    }
+    case ND_BLOCK: {
+        for (int i=0; i<node->n_children; i++) {
+            gen(node->children[i]);
+            printf("    pop rax\n");
+        }
         return;
     }
     }

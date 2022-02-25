@@ -38,6 +38,7 @@ typedef enum {
     ND_IF, // if n_children==2 or 3
     ND_WHILE, // while n_children==2
     ND_FOR, // for n_children==4
+    ND_BLOCK, // block statement
     ND_LVAR, // local variable
 } NodeKind;
 
@@ -49,7 +50,7 @@ struct Node {
     Node *rhs;
     int val; // when ND_NUM
     int offset; // when ND_LVAR
-    Node *children[4]; // used by control statements
+    Node *children[200]; // used by control statements
     int n_children;
 };
 

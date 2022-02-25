@@ -145,6 +145,7 @@ stmt       = expr ";"
            | "if" "(" expr ")" stmt ("else" stmt)?
            | "while" "(" expr ")" stmt
            | "for (expr?; expr?; expr?) stmt"
+           | "{" stmt* "}"
 expr       = assign
 assign     = equality ("=" assign)?
 equality   = relational ("==" relational | "!=" relational)*
@@ -234,6 +235,17 @@ Node *stmt() {
         node->kind = ND_RETURN;
         node->lhs = expr();
         expect(";");
+    } else if (consume("{")) {
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_BLOCK;
+        int n_stmts = 0;
+        while (1) {
+            if (consume("}")) {
+                break;
+            }
+            node->children[n_stmts++] = stmt();
+        }
+        node->n_children = n_stmts;
     } else {
         node = expr();
         expect(";");
@@ -374,6 +386,11 @@ Token *tokenize(char *p) {
         }
 
         if (*p == '=' | *p == ';') {
+            cur = new_token(TK_RESERVED, cur, p++, 1);
+            continue;
+        }
+
+        if (*p == '{' | *p == '}') {
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
         }
