@@ -46,6 +46,15 @@ bool consume_number(int *val) {
     return true;
 }
 
+// Advances a token and returns true when the next token is specified kind.
+// Returns false otherwise
+bool consume_kind(TokenKind kind) {
+    if (token->kind != kind)
+        return false;
+    token = token->next;
+    return true;
+}
+
 // Advances a token when the next token is a number.
 // Reports an error otherwise.
 void expect(char *op) {
@@ -132,6 +141,7 @@ Node *new_node_lvar(Token *tok) {
 /*
 program    = stmt*
 stmt       = expr ";"
+           | "return" expr ";"
 expr       = assign
 assign     = equality ("=" assign)?
 equality   = relational ("==" relational | "!=" relational)*
@@ -153,7 +163,16 @@ void program() {
 }
 
 Node *stmt() {
-    Node *node = expr();
+    Node *node;
+
+    if (consume_kind(TK_RETURN)) {
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_RETURN;
+        node->lhs = expr();
+    } else {
+        node = expr();
+    }
+
     expect(";");
     return node;
 }
@@ -254,6 +273,13 @@ Node *primary() {
     return new_node_lvar(expect_ident());
 }
 
+static int is_alnum(char c) {
+    return ('a' <= c && c <= 'z')
+           || ('A' <= c && c <= 'Z')
+           || ('0' <= c && c <= '9')
+           || (c == '_');
+}
+
 Token *tokenize(char *p) {
     Token head;
     head.next = NULL;
@@ -284,6 +310,13 @@ Token *tokenize(char *p) {
 
         if (*p == '=' | *p == ';') {
             cur = new_token(TK_RESERVED, cur, p++, 1);
+            continue;
+        }
+
+        // return keyword
+        if (strncmp(p, "return", 6) == 0 && !is_alnum(p[6])) {
+            cur = new_token(TK_RETURN, cur, p, 6);
+            p += 6;
             continue;
         }
 

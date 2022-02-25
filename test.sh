@@ -38,5 +38,8 @@ assert 5 "a=2;b=3;a+b;"
 assert 5 "a=1;b=3+1;a+b;"
 assert 5 "foo=2; bar=3; foo+bar;"
 assert 5 "foo=1;bar=3+1;foo+bar;"
+assert 10 "return 10;"
+assert 5 "a=1;b=5;return b;"
+assert 1 "a=1;b=5;return a;"
 
 echo OK

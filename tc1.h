@@ -2,6 +2,7 @@ typedef enum {
     TK_RESERVED,
     TK_IDENT,
     TK_NUM,
+    TK_RETURN,
     TK_EOF,
 } TokenKind;
 
@@ -29,6 +30,7 @@ typedef enum {
     ND_NEQ, // !=
     ND_ASSIGN, // =
     ND_NUM, // integer
+    ND_RETURN, // return
     ND_LVAR, // local variable
 } NodeKind;
 
