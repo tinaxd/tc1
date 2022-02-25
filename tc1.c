@@ -27,6 +27,12 @@ typedef enum {
     ND_SUB, // -
     ND_MUL, // *
     ND_DIV, // /
+    ND_LT, // <
+    ND_LE, // <=
+    ND_GT, // >
+    ND_GE, // >=
+    ND_EQ, // ==
+    ND_NEQ, // !=
     ND_NUM, // integer
 } NodeKind;
 
@@ -87,7 +93,7 @@ void expect(char *op) {
 // Reports an error otherwise.
 int expect_number() {
     if (token->kind != TK_NUM)
-        error_at(token->str, "not a number");
+        error_at(token->str, "not a number: '%s'", token->str);
     int val = token->val;
     token = token->next;
     return val;
@@ -123,18 +129,62 @@ Node *new_node_num(int val) {
 }
 
 /*
-expr    = mul ("+" mul | "-" mul)*
+expr = equality
+equality = relational ("==" relational | "!=" relational)*
+relational = add ("<" add | "<=" add | ">" add | ">=" add)*
+add    = mul ("+" mul | "-" mul)*
 mul     = unary ("*" unary | "/" unary)*
 unary   = ("+" | "-")? primary
 primary = num | "(" expr ")"
 */
 
 Node *expr();
+Node *equality();
+Node *relational();
+Node *add();
 Node *mul();
 Node *unary();
 Node *primary();
 
 Node *expr() {
+    return equality();
+}
+
+Node *equality() {
+    Node *node = relational();
+    
+    while (true) {
+        if (consume("=="))
+            node = new_node(ND_EQ, node, relational());
+        else if (consume("!="))
+            node = new_node(ND_NEQ, node, relational());
+        else
+            return node;
+    }
+}
+
+Node *relational() {
+    Node *node = add();
+    
+    while (true) {
+        if (consume("<"))
+            node = new_node(ND_LT, node, add());
+        else if (consume("<="))
+            node = new_node(ND_LE, node, add());
+        else if (consume(">"))
+            node = new_node(ND_GT, node, add());
+        else if (consume(">="))
+            node = new_node(ND_GE, node, add());
+        else if (consume("=="))
+            node = new_node(ND_EQ, node, add());
+        else if (consume("!="))
+            node = new_node(ND_NEQ, node, add());
+        else
+            return node;
+    }
+}
+
+Node *add() {
     Node *node = mul();
     
     while (true) {
@@ -218,6 +268,17 @@ Token *tokenize(char *p) {
         // Skip spaces
         if (isspace(*p)) {
             p++;
+            continue;
+        }
+
+        if (memcmp(p, "==", 2) || memcmp(p, "<=", 2) || memcmp(p, ">=", 2) || memcmp(p, "!=", 2)) {
+            cur = new_token(TK_RESERVED, cur, p, 2);
+            p += 2;
+            continue;
+        }
+
+        if (*p == '<' || *p == '>') {
+            cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
         }
 
