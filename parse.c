@@ -139,7 +139,8 @@ Node *new_node_lvar(Token *tok) {
 }
 
 /*
-program    = stmt*
+program    = definition*
+definition = ident ("(" (ident (", ident)*)? ")")? "{" stmt* "}"
 stmt       = expr ";"
            | "return" expr ";"
            | "if" "(" expr ")" stmt ("else" stmt)?
@@ -161,9 +162,55 @@ Node *code[100];
 void program() {
     int i = 0;
     while (!at_eof()) {
-        code[i++] = stmt();
+        code[i++] = definition();
     }
     code[i] = NULL;
+}
+
+Node *definition() {
+    Token *ident = expect_ident();
+    expect("(");
+    int n_params = 0;
+    char *params[6]; // TODO: 7 or more params
+    int params_len[6];
+    if (!consume(")")) {
+        // with params
+        Token *id = expect_ident();
+        params[n_params] = id->str;
+        params_len[n_params++] = id->len;
+        while (true) {
+            if (consume(",")) {
+                Token *id1 = expect_ident();
+                params[n_params] = id1->str;
+                params_len[n_params++] = id1->len;
+            } else {
+                break;
+            }
+        }
+        expect(")");
+    }
+
+    consume("{");
+    Node *body = calloc(1, sizeof(Node));
+    body->kind = ND_BLOCK;
+    int n_stmts = 0;
+    while (1) {
+        if (consume("}")) {
+            break;
+        }
+        body->children[n_stmts++] = stmt();
+    }
+    body->n_children = n_stmts;
+
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = ND_DEF;
+    node->funcname = ident->str;
+    node->funcname_len = ident->len;
+    node->lhs = body;
+    memcpy(node->parameters, params, n_params);
+    memcpy(node->parameters_len, params_len, n_params);
+    node->n_parameters = n_params;
+    return node;
 }
 
 Node *stmt() {

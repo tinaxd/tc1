@@ -140,6 +140,26 @@ void gen(Node *node) {
         printf("    call %s\n", funcname);
         return;
     }
+    case ND_DEF: {
+        char funcname[100];
+        memcpy(funcname, node->funcname, node->funcname_len);
+        funcname[node->funcname_len] = '\0';
+
+        printf("%s:\n", funcname);
+
+        printf("    push rbp\n");
+        printf("    mov rbp, rsp\n");
+
+        // count the number of LVars
+        int lvars = 0;
+        for (LVar *var=locals; var; var=var->next) lvars++;
+        printf("    sub rsp, %d\n", lvars * 8);
+
+        for (int i=0; i<node->lhs->n_children; i++) {
+            gen(node->lhs->children[i]);
+        }
+        return;
+    }
     }
 
     gen(node->lhs);

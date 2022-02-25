@@ -40,6 +40,7 @@ typedef enum {
     ND_FOR, // for n_children==4
     ND_BLOCK, // block statement
     ND_CALL, // function call
+    ND_DEF, // function definition, parameters to parameters, block statement to lhs
     ND_LVAR, // local variable
 } NodeKind;
 
@@ -55,6 +56,9 @@ struct Node {
     int n_children;
     char *funcname; // when ND_CALL
     int funcname_len;
+    char *parameters[6]; // when ND_DEF
+    int parameters_len[6];
+    int n_parameters;
 };
 
 typedef struct LVar LVar;
@@ -83,6 +87,7 @@ void gen(Node *node);
 Token *tokenize(char *p);
 
 void program();
+Node *definition();
 Node *stmt();
 Node *expr();
 Node *assign();

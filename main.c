@@ -21,15 +21,6 @@ int main(int argc, char **argv) {
 
     printf(".intel_syntax noprefix\n");
     printf(".globl main\n");
-    printf("main:\n");
-
-    printf("    push rbp\n");
-    printf("    mov rbp, rsp\n");
-
-    // count the number of LVars
-    int lvars = 0;
-    for (LVar *var=locals; var; var=var->next) lvars++;
-    printf("    sub rsp, %d\n", lvars * 8);
 
     for (int i=0; code[i]; i++) {
         gen(code[i]);
