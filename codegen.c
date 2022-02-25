@@ -1,6 +1,7 @@
 #include "tc1.h"
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static void gen_unique_label(char *str) {
     static int number = 0;
@@ -119,6 +120,13 @@ void gen(Node *node) {
             gen(node->children[i]);
             printf("    pop rax\n");
         }
+        return;
+    }
+    case ND_CALL: {
+        char funcname[100];
+        memcpy(funcname, node->funcname, node->funcname_len);
+        funcname[node->funcname_len] = '\0';
+        printf("    call %s\n", funcname);
         return;
     }
     }

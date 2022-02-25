@@ -39,6 +39,7 @@ typedef enum {
     ND_WHILE, // while n_children==2
     ND_FOR, // for n_children==4
     ND_BLOCK, // block statement
+    ND_CALL, // function call
     ND_LVAR, // local variable
 } NodeKind;
 
@@ -52,6 +53,8 @@ struct Node {
     int offset; // when ND_LVAR
     Node *children[200]; // used by control statements
     int n_children;
+    char *funcname; // when ND_CALL
+    int funcname_len;
 };
 
 typedef struct LVar LVar;

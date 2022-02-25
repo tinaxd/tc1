@@ -4,7 +4,7 @@ assert() {
     input="$2"
 
     ./tc1 "$input" > tmp.s
-    cc -o tmp tmp.s
+    cc -o tmp tmp.s library.o
     ./tmp
     actual="$?"
 
@@ -65,5 +65,7 @@ assert 2 "for (i=1; i<=10; i=i+1) {a = i+1; return a;}"
 assert 100 "for (i=1; i<=10; i=i+1) {a = 1; if (a == 2) return a;} return 100;"
 assert 2 "for (i=1; i<=10; i=i+1) {a = i; if (a == 2) return a;} return 100;"
 assert 1 "for (i=1; i<=10; i=i+1) {a = i+1; if (a == 2) return i;} return 100;"
+assert 0 "foo(); return 0;"
+# assert 11 "return foo();"
 
 echo OK

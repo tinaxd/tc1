@@ -153,7 +153,7 @@ relational = add ("<" add | "<=" add | ">" add | ">=" add)*
 add        = mul ("+" mul | "-" mul)*
 mul        = unary ("*" unary | "/" unary)*
 unary      = ("+" | "-")? primary
-primary    = num | ident | "(" expr ")"
+primary    = num | ident ("(" ")")? | "(" expr ")"
 */
 
 Node *code[100];
@@ -347,7 +347,20 @@ Node *primary() {
         return new_node_num(num);
     }
 
-    return new_node_lvar(expect_ident());
+    Token *ident = expect_ident();
+    if (consume("(")) {
+        // function call
+        expect(")");
+        Node *node = calloc(1, sizeof(Node));
+        node->kind = ND_CALL;
+        node->funcname = ident->str;
+        node->funcname_len = ident->len;
+        node->n_children = 0;
+        return node;
+    } else {
+        // local variable
+        return new_node_lvar(ident);
+    }
 }
 
 static int is_alnum(char c) {
