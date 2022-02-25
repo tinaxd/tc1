@@ -29,6 +29,11 @@ assert 1 '1<2;'
 assert 0 '1>=2;'
 assert 42 "42;"
 assert 2 "a=b=2;"
+assert 3 "a=1;b=3;b;"
+assert 5 "a=1;b=3;c=5;c;"
+assert 3 "a=1;b=3;c=5;b;"
+assert 1 "a=1;b=3;c=5;a;"
+assert 1 "a=1;b=3;a;"
 assert 5 "a=2;b=3;a+b;"
 assert 5 "a=1;b=3+1;a+b;"
 assert 5 "foo=2; bar=3; foo+bar;"

@@ -42,6 +42,17 @@ struct Node {
     int offset; // when ND_LVAR
 };
 
+typedef struct LVar LVar;
+
+struct LVar {
+    LVar *next; // next lvar or null
+    char *name;
+    int len; // length of name
+    int offset; // offset from rbp
+};
+
+extern LVar *locals;
+
 // input program
 extern char *user_input;
 
@@ -68,3 +79,7 @@ Node *unary();
 Node *primary();
 
 extern Node *code[];
+
+// Find LVar by the name.
+// Returns NULL if not found.
+LVar *find_lvar(Token *tok);

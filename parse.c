@@ -66,10 +66,10 @@ int expect_number() {
 
 // Advances a token and returns the ident when the next token is an ident.
 // Reports an error otherwise.
-char *expect_ident() {
+Token *expect_ident() {
     if (token->kind != TK_IDENT)
         error_at(token->str, "not an ident: '%s'", token->str);
-    char *val = token->str;
+    char *val = token;
     token = token->next;
     return val;
 }
@@ -103,10 +103,29 @@ Node *new_node_num(int val) {
     return node;
 }
 
-Node *new_node_lvar(char ident) {
+Node *new_node_lvar(Token *tok) {
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_LVAR;
-    node->offset = 8 * (ident - 'a' + 1);
+
+    LVar *var = find_lvar(tok);
+    if (var) {
+        node->offset = var->offset;
+    } else {
+        var = calloc(1, sizeof(LVar));
+        var->next = locals;
+        var->name = tok->str;
+        var->len = tok->len;
+        if (locals == NULL) {
+            // first LVar
+            var->offset = 8;
+        } else {
+            var->offset = locals->offset + 8;
+        }
+        node->offset = var->offset;
+        locals = var;
+    }
+    fprintf(stderr, "tok %c offset %d\n", tok->str[0], var->offset);
+
     return node;
 }
 
@@ -232,8 +251,7 @@ Node *primary() {
         return new_node_num(num);
     }
 
-    char *ident = expect_ident();
-    return new_node_lvar(ident[0]);
+    return new_node_lvar(expect_ident());
 }
 
 Token *tokenize(char *p) {
@@ -289,4 +307,15 @@ Token *tokenize(char *p) {
 
     new_token(TK_EOF, cur, p, 0);
     return head.next;
+}
+
+LVar *locals = NULL;
+
+LVar *find_lvar(Token *tok) {
+    for (LVar *var = locals; var; var = var->next) {
+        if (var->len == tok->len && !memcmp(var->name, tok->str, var->len)) {
+            return var;
+        }
+    }
+    return NULL;
 }
