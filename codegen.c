@@ -126,6 +126,17 @@ void gen(Node *node) {
         char funcname[100];
         memcpy(funcname, node->funcname, node->funcname_len);
         funcname[node->funcname_len] = '\0';
+        // arguments TODO: 7 or more arguments
+        for (int i=0; i<node->n_children; i++) {
+            gen(node->children[i]);
+        }
+        const char* registers[] = {
+            "rdi", "rsi", "rdx", "rcx", "r8", "r9"
+        };
+        for (int i=node->n_children-1; i>=0; i--) {
+            printf("    pop %s\n", registers[i]);
+        }
+        // call
         printf("    call %s\n", funcname);
         return;
     }

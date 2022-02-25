@@ -153,7 +153,7 @@ relational = add ("<" add | "<=" add | ">" add | ">=" add)*
 add        = mul ("+" mul | "-" mul)*
 mul        = unary ("*" unary | "/" unary)*
 unary      = ("+" | "-")? primary
-primary    = num | ident ("(" ")")? | "(" expr ")"
+primary    = num | ident ("(" (expr (", expr)*)? ")")? | "(" expr ")"
 */
 
 Node *code[100];
@@ -350,12 +350,29 @@ Node *primary() {
     Token *ident = expect_ident();
     if (consume("(")) {
         // function call
-        expect(")");
+        int n_arguments = 0;
+        Node *arguments[6]; // TODO: 7 or more arguments
+        if (!consume(")")) {
+            // with arguments
+            Node *e = expr();
+            arguments[n_arguments++] = e;
+            while (true) {
+                if (consume(",")) {
+                    Node *e1 =expr();
+                    arguments[n_arguments++] = e1;
+                } else {
+                    break;
+                }
+            }
+            expect(")");
+        }
+
         Node *node = calloc(1, sizeof(Node));
         node->kind = ND_CALL;
         node->funcname = ident->str;
         node->funcname_len = ident->len;
-        node->n_children = 0;
+        memcpy(node->children, arguments, n_arguments * sizeof(Node*));
+        node->n_children = n_arguments;
         return node;
     } else {
         // local variable
@@ -398,12 +415,12 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (*p == '=' | *p == ';') {
+        if (*p == '=' || *p == ';') {
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
         }
 
-        if (*p == '{' | *p == '}') {
+        if (*p == '{' || *p == '}' || *p == ',') {
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
         }

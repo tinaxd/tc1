@@ -67,5 +67,6 @@ assert 2 "for (i=1; i<=10; i=i+1) {a = i; if (a == 2) return a;} return 100;"
 assert 1 "for (i=1; i<=10; i=i+1) {a = i+1; if (a == 2) return i;} return 100;"
 assert 0 "foo(); return 0;"
 # assert 11 "return foo();"
+assert 0 "bar(3, 4); return 0;"
 
 echo OK
