@@ -124,7 +124,7 @@ Node *new_node_lvar(Token *tok) {
         node->offset = var->offset;
         locals = var;
     }
-    fprintf(stderr, "tok %c offset %d\n", tok->str[0], var->offset);
+    // fprintf(stderr, "tok %c offset %d\n", tok->str[0], var->offset);
 
     return node;
 }
@@ -287,11 +287,6 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if ('a' <= *p && *p <= 'z') {
-            cur = new_token(TK_IDENT, cur, p++, 1);
-            continue;
-        }
-
         if (isdigit(*p)) {
             char *oldP = p;
             int val = strtol(oldP, &p, 10);
@@ -299,6 +294,20 @@ Token *tokenize(char *p) {
 
             cur = new_token(TK_NUM, cur, p, len);
             cur->val = val;
+            continue;
+        }
+
+        // LVar
+        char name[100];
+        int i = 0;
+        char *firstP = p;
+        while ('a' <= *p && *p <= 'z') {
+            name[i++] = *p;
+            p++;
+        }
+        name[i] = '\0';
+        if (i != 0) {
+            cur = new_token(TK_IDENT, cur, firstP, i);
             continue;
         }
 
