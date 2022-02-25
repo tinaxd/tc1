@@ -156,6 +156,21 @@ void gen(Node *node) {
         for (LVar *var=locals; var; var=var->next) lvars++;
         printf("    sub rsp, %d\n", lvars * 8);
 
+        // registers where arguments are stored
+        const char* registers[] = {
+            "rdi", "rsi", "rdx", "rcx", "r8", "r9"
+        };
+
+        for (int i=0; i<node->n_parameters; i++) {
+            char param_name[100];
+            memcpy(param_name, node->parameters[i], node->parameters_len[i]);
+            param_name[node->parameters_len[i]] = 0;
+            LVar *param = find_lvar_str(param_name);
+            printf("    mov rax, rbp\n");
+            printf("    sub rax, %d\n", param->offset);
+            printf("    mov [rax], %s\n", registers[i]);
+        }
+
         for (int i=0; i<node->lhs->n_children; i++) {
             gen(node->lhs->children[i]);
         }

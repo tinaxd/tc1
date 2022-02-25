@@ -207,8 +207,8 @@ Node *definition() {
     node->funcname = ident->str;
     node->funcname_len = ident->len;
     node->lhs = body;
-    memcpy(node->parameters, params, n_params);
-    memcpy(node->parameters_len, params_len, n_params);
+    memcpy(node->parameters, params, n_params * sizeof(char *));
+    memcpy(node->parameters_len, params_len, n_params * sizeof(int));
     node->n_parameters = n_params;
     return node;
 }
@@ -543,6 +543,16 @@ LVar *locals = NULL;
 LVar *find_lvar(Token *tok) {
     for (LVar *var = locals; var; var = var->next) {
         if (var->len == tok->len && !memcmp(var->name, tok->str, var->len)) {
+            return var;
+        }
+    }
+    return NULL;
+}
+
+LVar *find_lvar_str(const char *name) {
+    int len = strlen(name);
+    for (LVar *var = locals; var; var = var->next) {
+        if (var->len == len && !memcmp(var->name, name, var->len)) {
             return var;
         }
     }

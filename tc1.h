@@ -103,3 +103,4 @@ extern Node *code[];
 // Find LVar by the name.
 // Returns NULL if not found.
 LVar *find_lvar(Token *tok);
+LVar *find_lvar_str(const char *name); // null-terminated string

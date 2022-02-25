@@ -71,5 +71,10 @@ assert 0 "main() {bar(3, 4); return 0;}"
 assert 0 "main() {foobar(5); return 0;}"
 assert 3 "three() {return 3;} main() {a= three(); return a;}"
 assert 3 "three() {return 3;} main() {return three();}"
+assert 5 "add(a, b) {return a+b;} main() {return add(2, 3);}"
+assert 5 "three() {return 3;} two() {return 2;} main() {return two()+three();}"
+assert 5 "add(a, b) {return a+b;} main() {return add(2, add(2,1));}"
+assert 5 "add(a, b) {return a+b;} sub(a, b) {return a-b;} main() {return add(2, sub(5, 2));}"
+assert 5 "add(a, b) {return a+b;} sub(c, d) {return c-d;} main() {return add(2, sub(5, 2));}"
 
 echo OK
