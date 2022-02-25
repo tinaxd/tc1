@@ -3,6 +3,7 @@ typedef enum {
     TK_IDENT,
     TK_NUM,
     TK_RETURN,
+    TK_IF,
     TK_EOF,
 } TokenKind;
 
@@ -31,6 +32,7 @@ typedef enum {
     ND_ASSIGN, // =
     ND_NUM, // integer
     ND_RETURN, // return
+    ND_IF, // if
     ND_LVAR, // local variable
 } NodeKind;
 
@@ -42,6 +44,8 @@ struct Node {
     Node *rhs;
     int val; // when ND_NUM
     int offset; // when ND_LVAR
+    Node *children[4]; // used by control statements
+    int n_children;
 };
 
 typedef struct LVar LVar;

@@ -1,6 +1,11 @@
 #include "tc1.h"
 #include <stdio.h>
 
+static void gen_unique_label(char *str) {
+    static int number = 0;
+    sprintf(str, ".Lend%d", number++);
+}
+
 static void gen_lval(Node *node) {
     if (node->kind != ND_LVAR) {
         error("lhs of assignment is not a variable");
@@ -37,6 +42,18 @@ void gen(Node *node) {
         printf("    mov rsp, rbp\n");
         printf("    pop rbp\n");
         printf("    ret\n");
+        return;
+    case ND_IF:
+        // gen condition
+        gen(node->children[0]);
+        printf("    pop rax\n");
+        printf("    cmp rax, 0\n");
+        char *label = malloc(10);
+        gen_unique_label(label);
+        printf("    je %s\n", label);
+        // gen statement
+        gen(node->children[1]);
+        printf("%s:\n", label);
         return;
     }
 
