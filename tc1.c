@@ -29,8 +29,8 @@ typedef enum {
     ND_DIV, // /
     ND_LT, // <
     ND_LE, // <=
-    ND_GT, // >
-    ND_GE, // >=
+    // ND_GT, // >
+    // ND_GE, // >=
     ND_EQ, // ==
     ND_NEQ, // !=
     ND_NUM, // integer
@@ -172,9 +172,9 @@ Node *relational() {
         else if (consume("<="))
             node = new_node(ND_LE, node, add());
         else if (consume(">"))
-            node = new_node(ND_GT, node, add());
+            node = new_node(ND_LT, add(), node);
         else if (consume(">="))
-            node = new_node(ND_GE, node, add());
+            node = new_node(ND_LE, add(), node);
         else if (consume("=="))
             node = new_node(ND_EQ, node, add());
         else if (consume("!="))
@@ -254,6 +254,26 @@ void gen(Node *node) {
         printf("    cqo\n");
         printf("    idiv rdi\n");
         break;
+    case ND_LT:
+        printf("    cmp rax, rdi\n");
+        printf("    setl al\n");
+        printf("    movzb rax, al\n");
+        break;
+    case ND_LE:
+        printf("    cmp rax, rdi\n");
+        printf("    setle al\n");
+        printf("    movzb rax, al\n");
+        break;
+    case ND_EQ:
+        printf("    cmp rax, rdi\n");
+        printf("    sete al\n");
+        printf("    movzb rax, al\n");
+        break;
+    case ND_NEQ:
+        printf("    cmp rax, rdi\n");
+        printf("    setne al\n");
+        printf("    movzb rax, al\n");
+        break;
     }
 
     printf("    push rax\n");
@@ -271,7 +291,7 @@ Token *tokenize(char *p) {
             continue;
         }
 
-        if (memcmp(p, "==", 2) || memcmp(p, "<=", 2) || memcmp(p, ">=", 2) || memcmp(p, "!=", 2)) {
+        if (!memcmp(p, "==", 2) || !memcmp(p, "<=", 2) || !memcmp(p, ">=", 2) || !memcmp(p, "!=", 2)) {
             cur = new_token(TK_RESERVED, cur, p, 2);
             p += 2;
             continue;
