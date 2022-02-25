@@ -138,6 +138,7 @@ void gen(Node *node) {
         }
         // call
         printf("    call %s\n", funcname);
+        printf("    push rax\n");
         return;
     }
     case ND_DEF: {
@@ -158,6 +159,7 @@ void gen(Node *node) {
         for (int i=0; i<node->lhs->n_children; i++) {
             gen(node->lhs->children[i]);
         }
+        printf("    pop rax\n");
         return;
     }
     }

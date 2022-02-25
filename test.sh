@@ -69,5 +69,7 @@ assert 0 "main() {foo(); return 0;}"
 # assert 11 "return foo();"
 assert 0 "main() {bar(3, 4); return 0;}"
 assert 0 "main() {foobar(5); return 0;}"
+assert 3 "three() {return 3;} main() {a= three(); return a;}"
+assert 3 "three() {return 3;} main() {return three();}"
 
 echo OK
