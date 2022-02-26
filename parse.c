@@ -212,6 +212,7 @@ void program() {
 }
 
 Node *definition() {
+    expect("int");
     Token *ident = expect_ident();
     expect("(");
     int n_params = 0;
