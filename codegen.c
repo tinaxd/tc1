@@ -165,7 +165,7 @@ void gen(Node *node) {
             char param_name[100];
             memcpy(param_name, node->parameters[i], node->parameters_len[i]);
             param_name[node->parameters_len[i]] = 0;
-            LVar *param = find_lvar_str(param_name);
+            LVar *param = find_lvar_str(param_name, funcname, node->funcname_len);
             printf("    mov rax, rbp\n");
             printf("    sub rax, %d\n", param->offset);
             printf("    mov [rax], %s\n", registers[i]);
@@ -185,6 +185,8 @@ void gen(Node *node) {
         printf("    pop rax\n");
         printf("    mov rax, [rax]\n");
         printf("    push rax\n");
+        return;
+    case ND_EMPTY:
         return;
     }
 

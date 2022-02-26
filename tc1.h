@@ -43,6 +43,7 @@ typedef enum {
     ND_DEF, // function definition, parameters to parameters, block statement to lhs
     ND_DEREF, // *
     ND_ADDR, // &
+    ND_EMPTY, // lvar declaration
     ND_LVAR, // local variable
 } NodeKind;
 
@@ -70,6 +71,8 @@ struct LVar {
     char *name;
     int len; // length of name
     int offset; // offset from rbp
+    char *funcname;
+    int funcname_len;
 };
 
 extern LVar *locals;
@@ -104,5 +107,5 @@ extern Node *code[];
 
 // Find LVar by the name.
 // Returns NULL if not found.
-LVar *find_lvar(Token *tok);
-LVar *find_lvar_str(const char *name); // null-terminated string
+LVar *find_lvar(Token *tok, const char *funcname, int funcname_len);
+LVar *find_lvar_str(const char *name, const char *funcname, int funcname_len); // null-terminated string

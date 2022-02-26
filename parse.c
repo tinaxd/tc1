@@ -87,6 +87,11 @@ bool at_eof() {
     return token->kind == TK_EOF;
 }
 
+static struct {
+    char *funcname;
+    int len;
+} current_function;
+
 // Creates a new token and links it next to cur.
 Token *new_token(TokenKind kind, Token *cur, char *str, int len) {
     Token *tok = calloc(1, sizeof(Token));
@@ -116,26 +121,63 @@ Node *new_node_lvar(Token *tok) {
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_LVAR;
 
-    LVar *var = find_lvar(tok);
+    LVar *var = find_lvar(tok, current_function.funcname, current_function.len);
     if (var) {
         node->offset = var->offset;
     } else {
-        var = calloc(1, sizeof(LVar));
-        var->next = locals;
-        var->name = tok->str;
-        var->len = tok->len;
-        if (locals == NULL) {
-            // first LVar
-            var->offset = 8;
-        } else {
-            var->offset = locals->offset + 8;
-        }
-        node->offset = var->offset;
-        locals = var;
+        char varname[100];
+        memcpy(varname, tok->str, tok->len);
+        varname[tok->len] = 0;
+        error("lvar %s is not declared\n", varname);
     }
     // fprintf(stderr, "tok %c offset %d\n", tok->str[0], var->offset);
 
     return node;
+}
+
+static void register_new_lvar_str(const char *name, int len);
+
+static void register_new_lvar(Token *tok) {
+    register_new_lvar_str(tok->str, tok->len);
+}
+
+static void register_new_lvar_str(const char *name, int len) {
+    LVar *var = calloc(1, sizeof(LVar));
+    var->next = locals;
+    var->name = name;
+    var->len = len;
+    if (locals == NULL) {
+        // first LVar
+        var->offset = 8;
+    } else {
+        int max_offset = 0;
+        for (LVar *other=var->next; other; other=other->next) {
+            if (other->funcname_len == current_function.len
+                && memcmp(other->funcname, current_function.funcname, current_function.len) == 0) {
+                    if (max_offset < other->offset) {
+                        max_offset = other->offset;
+                    }
+                }
+        }
+        var->offset = max_offset + 8;
+    }
+    var->funcname = current_function.funcname;
+    var->funcname_len = current_function.len;
+    locals = var;
+
+    /*
+    fprintf(stderr, "-- locals dump --\n");
+    for (LVar *var=locals; var; var=var->next) {
+        char funcname[100];
+        memcpy(funcname, var->funcname, var->funcname_len);
+        funcname[var->funcname_len] = 0;
+        char varname[100];
+        memcpy(varname, var->name, var->len);
+        varname[var->len] = 0;
+
+        fprintf(stderr, "in function %s: lvar %s, offset: %d\n", funcname, varname, var->offset);
+    }
+    */
 }
 
 /*
@@ -147,6 +189,7 @@ stmt       = expr ";"
            | "while" "(" expr ")" stmt
            | "for (expr?; expr?; expr?) stmt"
            | "{" stmt* "}"
+           | "int" ident ";"
 expr       = assign
 assign     = equality ("=" assign)?
 equality   = relational ("==" relational | "!=" relational)*
@@ -188,6 +231,15 @@ Node *definition() {
             }
         }
         expect(")");
+    }
+
+    // set current function name
+    current_function.funcname = ident->str;
+    current_function.len = ident->len;
+
+    // register params as lvars
+    for (int i=0; i<n_params; i++) {
+        register_new_lvar_str(params[i], params_len[i]);
     }
 
     consume("{");
@@ -293,6 +345,12 @@ Node *stmt() {
             node->children[n_stmts++] = stmt();
         }
         node->n_children = n_stmts;
+    } else if (consume("int")) {
+        Token *tok = expect_ident();
+        expect(";");
+        register_new_lvar(tok);
+        node = calloc(1, sizeof(Node));
+        node->kind = ND_EMPTY;
     } else {
         node = expr();
         expect(";");
@@ -516,6 +574,13 @@ Token *tokenize(char *p) {
             continue;
         }
 
+        // int keyword
+        if (strncmp(p, "int", 3) == 0 && !is_alnum(p[3])) {
+            cur = new_token(TK_RESERVED, cur, p, 3);
+            p += 3;
+            continue;
+        }
+
         if (isdigit(*p)) {
             char *oldP = p;
             int val = strtol(oldP, &p, 10);
@@ -549,19 +614,19 @@ Token *tokenize(char *p) {
 
 LVar *locals = NULL;
 
-LVar *find_lvar(Token *tok) {
+LVar *find_lvar(Token *tok, const char *funcname, int funcname_len) {
     for (LVar *var = locals; var; var = var->next) {
-        if (var->len == tok->len && !memcmp(var->name, tok->str, var->len)) {
+        if (var->len == tok->len && !memcmp(var->name, tok->str, var->len) && var->funcname_len == funcname_len && !memcmp(var->funcname, funcname, funcname_len)) {
             return var;
         }
     }
     return NULL;
 }
 
-LVar *find_lvar_str(const char *name) {
+LVar *find_lvar_str(const char *name, const char *funcname, int funcname_len) {
     int len = strlen(name);
     for (LVar *var = locals; var; var = var->next) {
-        if (var->len == len && !memcmp(var->name, name, var->len)) {
+        if (var->len == len && !memcmp(var->name, name, var->len) && var->funcname_len == funcname_len && !memcmp(var->funcname, funcname, funcname_len)) {
             return var;
         }
     }
