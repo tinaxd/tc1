@@ -64,6 +64,13 @@ struct Node {
     int n_parameters;
 };
 
+struct Type {
+    enum {T_INT, T_PTR} ty;
+    struct Type *ptr_to; // when ty is T_PTR
+};
+
+typedef struct Type Type;
+
 typedef struct LVar LVar;
 
 struct LVar {
@@ -73,6 +80,7 @@ struct LVar {
     int offset; // offset from rbp
     char *funcname;
     int funcname_len;
+    Type ty;
 };
 
 extern LVar *locals;

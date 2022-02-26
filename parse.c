@@ -135,13 +135,13 @@ Node *new_node_lvar(Token *tok) {
     return node;
 }
 
-static void register_new_lvar_str(const char *name, int len);
+static void register_new_lvar_str(char *name, int len, Type ty);
 
-static void register_new_lvar(Token *tok) {
-    register_new_lvar_str(tok->str, tok->len);
+static void register_new_lvar(Token *tok, Type ty) {
+    register_new_lvar_str(tok->str, tok->len, ty);
 }
 
-static void register_new_lvar_str(const char *name, int len) {
+static void register_new_lvar_str(char *name, int len, Type ty) {
     LVar *var = calloc(1, sizeof(LVar));
     var->next = locals;
     var->name = name;
@@ -163,6 +163,7 @@ static void register_new_lvar_str(const char *name, int len) {
     }
     var->funcname = current_function.funcname;
     var->funcname_len = current_function.len;
+    var->ty = ty;
     locals = var;
 
     /*
@@ -241,7 +242,9 @@ Node *definition() {
 
     // register params as lvars
     for (int i=0; i<n_params; i++) {
-        register_new_lvar_str(params[i], params_len[i]);
+        Type ty;
+        ty.ty = T_INT;
+        register_new_lvar_str(params[i], params_len[i], ty);
     }
 
     consume("{");
@@ -350,7 +353,9 @@ Node *stmt() {
     } else if (consume("int")) {
         Token *tok = expect_ident();
         expect(";");
-        register_new_lvar(tok);
+        Type ty;
+        ty.ty = T_INT;
+        register_new_lvar(tok, ty);
         node = calloc(1, sizeof(Node));
         node->kind = ND_EMPTY;
     } else {
