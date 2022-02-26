@@ -77,5 +77,6 @@ assert 5 "add(a, b) {return a+b;} main() {return add(2, add(2,1));}"
 assert 5 "add(a, b) {return a+b;} sub(a, b) {return a-b;} main() {return add(2, sub(5, 2));}"
 assert 5 "add(a, b) {return a+b;} sub(c, d) {return c-d;} main() {return add(2, sub(5, 2));}"
 assert 55 "fibo(x) { if(x==0) return 0; if(x==1) return 1; return fibo(x-1)+fibo(x-2);} main(){return fibo(10);}"
+assert 3 "main() {x=3; y=&x; return *y;}"
 
 echo OK

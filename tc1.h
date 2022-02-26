@@ -41,6 +41,8 @@ typedef enum {
     ND_BLOCK, // block statement
     ND_CALL, // function call
     ND_DEF, // function definition, parameters to parameters, block statement to lhs
+    ND_DEREF, // *
+    ND_ADDR, // &
     ND_LVAR, // local variable
 } NodeKind;
 
