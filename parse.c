@@ -190,7 +190,7 @@ stmt       = expr ";"
            | "while" "(" expr ")" stmt
            | "for (expr?; expr?; expr?) stmt"
            | "{" stmt* "}"
-           | "int" ident ";"
+           | "int" "*"* ident ";"
 expr       = assign
 assign     = equality ("=" assign)?
 equality   = relational ("==" relational | "!=" relational)*
@@ -352,10 +352,32 @@ Node *stmt() {
         }
         node->n_children = n_stmts;
     } else if (consume("int")) {
+        // count the number of stars
+        int n_stars = 0;
+        while (consume("*")) {
+            n_stars++;
+        }
+
         Token *tok = expect_ident();
         expect(";");
-        Type ty;
-        ty.ty = T_INT;
+
+        // construct the type based on the number of stars
+        Type *p_ty = NULL;
+        for (int i=0; i<n_stars+1; i++) {
+            if (p_ty == NULL) {
+                p_ty = malloc(sizeof(Type));
+                p_ty->ty = T_INT;
+            } else {
+                Type *old_p_ty = p_ty;
+                p_ty = malloc(sizeof(Type));
+                p_ty->ty = T_PTR;
+                p_ty->ptr_to = old_p_ty;
+            }
+        }
+        Type ty = *p_ty;
+        free(p_ty);
+        p_ty = NULL;
+
         register_new_lvar(tok, ty);
         node = calloc(1, sizeof(Node));
         node->kind = ND_EMPTY;
