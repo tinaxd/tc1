@@ -182,7 +182,7 @@ static void register_new_lvar_str(const char *name, int len) {
 
 /*
 program    = definition*
-definition = ident ("(" (ident (", ident)*)? ")")? "{" stmt* "}"
+definition = "int" ident ("(" ("int" ident ("," "int" ident)*)? ")")? "{" stmt* "}"
 stmt       = expr ";"
            | "return" expr ";"
            | "if" "(" expr ")" stmt ("else" stmt)?
@@ -218,11 +218,13 @@ Node *definition() {
     int params_len[6];
     if (!consume(")")) {
         // with params
+        expect("int");
         Token *id = expect_ident();
         params[n_params] = id->str;
         params_len[n_params++] = id->len;
         while (true) {
             if (consume(",")) {
+                expect("int");
                 Token *id1 = expect_ident();
                 params[n_params] = id1->str;
                 params_len[n_params++] = id1->len;
