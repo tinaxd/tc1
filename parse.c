@@ -200,7 +200,7 @@ stmt       = expr ";"
            | "while" "(" expr ")" stmt
            | "for (expr?; expr?; expr?) stmt"
            | "{" stmt* "}"
-           | "int" "*"* ident ";"
+           | "int" "*"* ident ("[" num "]")? ";"
 expr       = assign
 assign     = equality ("=" assign)?
 equality   = relational ("==" relational | "!=" relational)*
@@ -369,6 +369,16 @@ Node *stmt() {
         }
 
         Token *tok = expect_ident();
+
+        // array check
+        int is_array = 0;
+        int array_size = 0;
+        if (consume("[")) {
+            int array_size = expect_number();
+            expect("]");
+            is_array = 1;
+        }
+
         expect(";");
 
         // construct the type based on the number of stars
@@ -383,6 +393,13 @@ Node *stmt() {
                 p_ty->ty = T_PTR;
                 p_ty->ptr_to = old_p_ty;
             }
+        }
+        if (is_array) {
+            Type *old_p_ty = p_ty;
+            p_ty = malloc(sizeof(Type));
+            p_ty->ty = T_ARRAY;
+            p_ty->ptr_to = old_p_ty;
+            p_ty->array_size = array_size;
         }
         Type ty = *p_ty;
         free(p_ty);
@@ -617,6 +634,11 @@ Token *tokenize(char *p) {
         }
 
         if (*p == '*' || *p == '&') {
+            cur = new_token(TK_RESERVED, cur, p++, 1);
+            continue;
+        }
+
+        if (*p == '[' || *p == ']') {
             cur = new_token(TK_RESERVED, cur, p++, 1);
             continue;
         }

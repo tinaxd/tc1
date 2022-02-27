@@ -1,3 +1,5 @@
+#include <stddef.h>
+
 typedef enum {
     TK_RESERVED,
     TK_IDENT,
@@ -48,8 +50,9 @@ typedef enum {
 } NodeKind;
 
 struct Type {
-    enum {T_INT, T_PTR} ty;
+    enum {T_INT, T_PTR, T_ARRAY} ty;
     struct Type *ptr_to; // when ty is T_PTR
+    size_t array_size;
 };
 
 typedef struct Type Type;

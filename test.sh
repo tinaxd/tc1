@@ -90,5 +90,7 @@ assert 8 "int main() {int *y; return sizeof(y);}"
 assert 4 "int main() {int *y; return sizeof(*y);}"
 assert 8 "int main() {int x; return sizeof(&x);}"
 assert 4 "int main() {return sizeof(sizeof(1));}"
+assert 0 "int main() {int a[10]; return 0;}"
+assert 3 "int main() {int a[2]; *a=1; *(a+1)=2; int *p; return *p + *(p+1); }"
 
 echo OK
