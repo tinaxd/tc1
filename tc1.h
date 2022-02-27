@@ -47,6 +47,13 @@ typedef enum {
     ND_LVAR, // local variable
 } NodeKind;
 
+struct Type {
+    enum {T_INT, T_PTR} ty;
+    struct Type *ptr_to; // when ty is T_PTR
+};
+
+typedef struct Type Type;
+
 typedef struct Node Node;
 
 struct Node {
@@ -62,14 +69,8 @@ struct Node {
     char *parameters[6]; // when ND_DEF
     int parameters_len[6];
     int n_parameters;
+    Type ty;
 };
-
-struct Type {
-    enum {T_INT, T_PTR} ty;
-    struct Type *ptr_to; // when ty is T_PTR
-};
-
-typedef struct Type Type;
 
 typedef struct LVar LVar;
 

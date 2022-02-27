@@ -124,6 +124,7 @@ Node *new_node_lvar(Token *tok) {
     LVar *var = find_lvar(tok, current_function.funcname, current_function.len);
     if (var) {
         node->offset = var->offset;
+        node->ty = var->ty;
     } else {
         char varname[100];
         memcpy(varname, tok->str, tok->len);

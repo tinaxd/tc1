@@ -9,13 +9,18 @@ static void gen_unique_label(char *str) {
 }
 
 static void gen_lval(Node *node) {
-    if (node->kind != ND_LVAR) {
-        error("lhs of assignment is not a variable");
+    switch (node->kind) {
+    case ND_LVAR:
+        printf("    mov rax, rbp\n");
+        printf("    sub rax, %d\n", node->offset);
+        printf("    push rax\n");
+        return;
+    case ND_DEREF:
+        gen(node->lhs);
+        return;
+    default:
+        error("lhs of assignment is neither LVAR nor DEREF: kind: %d\n", node->kind);
     }
-
-    printf("    mov rax, rbp\n");
-    printf("    sub rax, %d\n", node->offset);
-    printf("    push rax\n");
 }
 
 void gen(Node *node) {
