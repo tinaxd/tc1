@@ -16,7 +16,14 @@ static void gen_lval(Node *node) {
         printf("    push rax\n");
         return;
     case ND_DEREF:
-        gen(node->lhs);
+        switch (node->ty.ty) {
+        case T_ARRAY:
+            gen_lval(node->lhs);
+            break;
+        default:
+            gen(node->lhs);
+            break;
+        }
         return;
     default:
         error("lhs of assignment is neither LVAR nor DEREF: kind: %d\n", node->kind);
@@ -28,12 +35,26 @@ static int calculate_arithmetic_step(Type ty) {
     case T_INT:
         return 1;
     case T_PTR:
+    case T_ARRAY:
         switch (ty.ptr_to->ty) {
         case T_INT:
             return 4;
         case T_PTR:
+        case T_ARRAY:
             return 8;
         }
+    }
+}
+
+static int calculate_offset(Type ty) {
+    switch (ty.ty) {
+    case T_INT:
+    case T_PTR:
+        return 8;
+    case T_ARRAY: {
+        // fprintf(stderr, "T_ARRAY: offset: %d * %d\n", ty.array_size, calculate_offset(*ty.ptr_to));
+        return ty.array_size * calculate_offset(*ty.ptr_to);
+    }
     }
 }
 
@@ -171,9 +192,11 @@ void gen(Node *node) {
         printf("    mov rbp, rsp\n");
 
         // count the number of LVars
-        int lvars = 0;
-        for (LVar *var=locals; var; var=var->next) lvars++;
-        printf("    sub rsp, %d\n", lvars * 8);
+        int offset = 0;
+        for (LVar *var=locals; var; var=var->next) {
+            offset += calculate_offset(var->ty);
+        }
+        printf("    sub rsp, %d\n", offset);
 
         // registers where arguments are stored
         const char* registers[] = {

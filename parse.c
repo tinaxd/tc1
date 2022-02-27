@@ -374,7 +374,7 @@ Node *stmt() {
         int is_array = 0;
         int array_size = 0;
         if (consume("[")) {
-            int array_size = expect_number();
+            array_size = expect_number();
             expect("]");
             is_array = 1;
         }
