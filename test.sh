@@ -79,5 +79,7 @@ assert 5 "int add(int a, int b) {return a+b;} int sub(int a, int b) {return a-b;
 assert 55 "int fibo(int x) { if(x==0) return 0; if(x==1) return 1; return fibo(x-1)+fibo(x-2);} int main(){return fibo(10);}"
 assert 3 "int main() {int x; int y; x=3; y=&x; return *y;}"
 assert 3 "int main() {int x; int *y; y = &x; *y = 3; return x;}"
+assert 4 "int main() {int *p; alloc4(&p, 1, 2, 4, 8); int *q; q = p+2; return *q;}"
+assert 8 "int main() {int *p; alloc4(&p, 1, 2, 4, 8); int *q; q = p+2; *q; q=q+1; return *q;}"
 
 echo OK

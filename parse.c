@@ -626,7 +626,7 @@ Token *tokenize(char *p) {
         char name[100];
         int i = 0;
         char *firstP = p;
-        while ('a' <= *p && *p <= 'z') {
+        while ((i == 0 && 'a' <= *p && *p <= 'z') || (i != 0 && is_alnum(*p))) {
             name[i++] = *p;
             p++;
         }

@@ -23,6 +23,20 @@ static void gen_lval(Node *node) {
     }
 }
 
+static int calculate_arithmetic_step(Type ty) {
+    switch (ty.ty) {
+    case T_INT:
+        return 1;
+    case T_PTR:
+        switch (ty.ptr_to->ty) {
+        case T_INT:
+            return 4;
+        case T_PTR:
+            return 8;
+        }
+    }
+}
+
 void gen(Node *node) {
     switch (node->kind) {
     case ND_NUM:
@@ -202,12 +216,22 @@ void gen(Node *node) {
     printf("    pop rax\n");
 
     switch (node->kind) {
-    case ND_ADD:
+    case ND_ADD: {
+        int step = calculate_arithmetic_step(node->lhs->ty);
+        if (step != 1) {
+            printf("    imul rdi, %d\n", step);
+        }
         printf("    add rax, rdi\n");
         break;
-    case ND_SUB:
+    }
+    case ND_SUB: {
+        int step = calculate_arithmetic_step(node->lhs->ty);
+        if (step != 1) {
+            printf("    imul rdi, %d\n", step);
+        }
         printf("    sub rax, rdi\n");
         break;
+    }
     case ND_MUL:
         printf("    imul rax, rdi\n");
         break;
