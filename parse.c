@@ -110,6 +110,15 @@ Node *new_node(NodeKind kind, Node *lhs, Node *rhs) {
     return node;
 }
 
+Node *new_node_with_ty(NodeKind kind, Node *lhs, Node *rhs, Type ty) {
+    Node *node = calloc(1, sizeof(Node));
+    node->kind = kind;
+    node->lhs = lhs;
+    node->rhs = rhs;
+    node->ty = ty;
+    return node;
+}
+
 Node *new_node_num(int val) {
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_NUM;
@@ -198,7 +207,7 @@ equality   = relational ("==" relational | "!=" relational)*
 relational = add ("<" add | "<=" add | ">" add | ">=" add)*
 add        = mul ("+" mul | "-" mul)*
 mul        = unary ("*" unary | "/" unary)*
-unary      = ("+" | "-")? primary | "*" unary | "&" unary
+unary      = ("+" | "-")? primary | "*" unary | "&" unary | "sizeof" unary
 primary    = num | ident ("(" (expr (", expr)*)? ")")? | "(" expr ")"
 */
 
@@ -421,17 +430,19 @@ Node *relational() {
     
     while (true) {
         if (consume("<"))
-            node = new_node(ND_LT, node, add());
+            node = new_node_with_ty(ND_LT, node, add(), node->ty);
         else if (consume("<="))
-            node = new_node(ND_LE, node, add());
-        else if (consume(">"))
-            node = new_node(ND_LT, add(), node);
-        else if (consume(">="))
-            node = new_node(ND_LE, add(), node);
-        else if (consume("=="))
-            node = new_node(ND_EQ, node, add());
+            node = new_node_with_ty(ND_LE, node, add(), node->ty);
+        else if (consume(">")) {
+            Node *a = add();
+            node = new_node_with_ty(ND_LT, a, node, a->ty);
+        } else if (consume(">=")) {
+            Node *a = add();
+            node = new_node_with_ty(ND_LE, a, node, a->ty);
+        } else if (consume("=="))
+            node = new_node_with_ty(ND_EQ, node, add(), node->ty);
         else if (consume("!="))
-            node = new_node(ND_NEQ, node, add());
+            node = new_node_with_ty(ND_NEQ, node, add(), node->ty);
         else
             return node;
     }
@@ -442,9 +453,9 @@ Node *add() {
     
     while (true) {
         if (consume("+"))
-            node = new_node(ND_ADD, node, mul());
+            node = new_node_with_ty(ND_ADD, node, mul(), node->ty);
         else if (consume("-"))
-            node = new_node(ND_SUB, node, mul());
+            node = new_node_with_ty(ND_SUB, node, mul(), node->ty);
         else
             return node;
     }
@@ -455,23 +466,53 @@ Node *mul() {
 
     while (true) {
         if (consume("*"))
-            node = new_node(ND_MUL, node, unary());
+            node = new_node_with_ty(ND_MUL, node, unary(), node->ty);
         else if (consume("/"))
-            node = new_node(ND_DIV, node, unary());
+            node = new_node_with_ty(ND_DIV, node, unary(), node->ty);
         else
             return node;
+    }
+}
+
+int calculate_sizeof(Type ty) {
+    switch (ty.ty) {
+    case T_INT:
+        return 4;
+    case T_PTR:
+        return 8;
     }
 }
 
 Node *unary() {
     if (consume("+"))
         return primary();
-    if (consume("-"))
-        return new_node(ND_SUB, new_node_num(0), primary());
+    if (consume("-")) {
+        Node *p = primary();
+        return new_node_with_ty(ND_SUB, new_node_num(0), p, p->ty);
+    }
     if (consume("*"))
         return new_node(ND_DEREF, unary(), NULL);
     if (consume("&"))
         return new_node(ND_ADDR, unary(), NULL);
+    if (consume("sizeof")) {
+        Node *u = unary();
+        switch (u->kind) {
+        case ND_ADD:
+        case ND_SUB:
+        case ND_MUL:
+        case ND_DIV:
+        case ND_LT:
+        case ND_LE:
+        case ND_EQ:
+        case ND_NEQ:
+        case ND_ASSIGN:
+        case ND_NUM:
+        case ND_LVAR:
+            return new_node_num(calculate_sizeof(u->ty));
+        default:
+            error("cannot sizeof");
+        }
+    }
     return primary();
 }
 
@@ -602,6 +643,13 @@ Token *tokenize(char *p) {
         if (strncmp(p, "for", 3) == 0 && !is_alnum(p[3])) {
             cur = new_token(TK_FOR, cur, p, 3);
             p += 3;
+            continue;
+        }
+
+        // sizeof keyword
+        if (strncmp(p, "sizeof", 6) == 0 && !is_alnum(p[6])) {
+            cur = new_token(TK_RESERVED, cur, p, 6);
+            p += 6;
             continue;
         }
 
