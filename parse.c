@@ -509,6 +509,16 @@ Node *unary() {
         case ND_NUM:
         case ND_LVAR:
             return new_node_num(calculate_sizeof(u->ty));
+        case ND_DEREF: {
+            Type *ref = u->lhs->ty.ptr_to;
+            if (ref == NULL) {
+                error("invalid dereference");
+            }
+            return new_node_num(calculate_sizeof(*ref));
+        }
+        case ND_ADDR: {
+            return new_node_num(8);
+        }
         default:
             error("cannot sizeof");
         }
