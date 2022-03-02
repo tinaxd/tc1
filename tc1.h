@@ -121,3 +121,5 @@ extern Node *code[];
 // Returns NULL if not found.
 LVar *find_lvar(Token *tok, const char *funcname, int funcname_len);
 LVar *find_lvar_str(const char *name, const char *funcname, int funcname_len); // null-terminated string
+
+int calculate_offset(Type ty);

@@ -158,7 +158,7 @@ static void register_new_lvar_str(char *name, int len, Type ty) {
     var->len = len;
     if (locals == NULL) {
         // first LVar
-        var->offset = 8;
+        var->offset = 0;
     } else {
         int max_offset = 0;
         for (LVar *other=var->next; other; other=other->next) {
@@ -169,7 +169,7 @@ static void register_new_lvar_str(char *name, int len, Type ty) {
                     }
                 }
         }
-        var->offset = max_offset + 8;
+        var->offset = max_offset + calculate_offset(ty);
     }
     var->funcname = current_function.funcname;
     var->funcname_len = current_function.len;

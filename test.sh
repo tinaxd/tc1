@@ -91,6 +91,11 @@ assert 4 "int main() {int *y; return sizeof(*y);}"
 assert 8 "int main() {int x; return sizeof(&x);}"
 assert 4 "int main() {return sizeof(sizeof(1));}"
 assert 0 "int main() {int a[10]; return 0;}"
-assert 3 "int main() {int a[2]; *a=1; *(a+1)=2; int *p; return *p + *(p+1); }"
+assert 3 "int main() {int a[1]; *a=2; return *a+1; }"
+assert 4 "int main() {int a[2]; *a=3; return *a+1; }"
+assert 5 "int main() {int a[2]; *(a+1)=4; return *(a+1)+1; }"
+assert 5 "int main() {int a[2]; *(a+1)=4; *a=3; return *(a+1)+1; }"
+assert 5 "int main() {int a[2]; *a=4; *(a+1)=3; return (*a)+1; }"
+assert 3 "int main() {int a[2]; *a=1; *(a+1)=2; return *a + *(a+1); }"
 
 echo OK

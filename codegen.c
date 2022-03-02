@@ -16,7 +16,7 @@ static void gen_lval(Node *node) {
         printf("    push rax\n");
         return;
     case ND_DEREF:
-        switch (node->ty.ty) {
+        switch (node->lhs->ty.ty) {
         case T_ARRAY:
             gen_lval(node->lhs);
             break;
@@ -26,7 +26,9 @@ static void gen_lval(Node *node) {
         }
         return;
     default:
-        error("lhs of assignment is neither LVAR nor DEREF: kind: %d\n", node->kind);
+        gen(node);
+        return;
+        // error("lhs of assignment is neither LVAR nor DEREF: kind: %d\n", node->kind);
     }
 }
 
@@ -46,9 +48,10 @@ static int calculate_arithmetic_step(Type ty) {
     }
 }
 
-static int calculate_offset(Type ty) {
+int calculate_offset(Type ty) {
     switch (ty.ty) {
     case T_INT:
+        return 4;
     case T_PTR:
         return 8;
     case T_ARRAY: {
@@ -65,9 +68,22 @@ void gen(Node *node) {
         return;
     case ND_LVAR:
         gen_lval(node);
-        printf("    pop rax\n");
-        printf("    mov rax, [rax]\n");
-        printf("    push rax\n");
+        if (node->ty.ty != T_ARRAY) {
+            printf("    pop rax\n");
+            switch (node->ty.ty) {
+            case T_INT:
+                printf("    push rdi\n");
+                printf("    mov rdi, rax\n");
+                printf("    xor rax, rax\n");
+                printf("    mov eax, DWORD PTR [rdi]\n");
+                printf("    pop rdi\n");
+                break;
+            case T_PTR:
+                printf("    mov rax, [rax]\n");
+                break;
+            }
+            printf("    push rax\n");
+        }
         return;
     case ND_ASSIGN:
         gen_lval(node->lhs);
@@ -75,7 +91,7 @@ void gen(Node *node) {
 
         printf("    pop rdi\n");
         printf("    pop rax\n");
-        printf("    mov [rax], rdi\n");
+        printf("    mov DWORD PTR [rax], edi\n");
         printf("    push rdi\n");
         return;
     case ND_RETURN:
@@ -200,7 +216,7 @@ void gen(Node *node) {
 
         // registers where arguments are stored
         const char* registers[] = {
-            "rdi", "rsi", "rdx", "rcx", "r8", "r9"
+            "edi", "esi", "edx", "ecx", "r8", "r9"
         };
 
         for (int i=0; i<node->n_parameters; i++) {
@@ -210,7 +226,7 @@ void gen(Node *node) {
             LVar *param = find_lvar_str(param_name, funcname, node->funcname_len);
             printf("    mov rax, rbp\n");
             printf("    sub rax, %d\n", param->offset);
-            printf("    mov [rax], %s\n", registers[i]);
+            printf("    mov DWORD PTR [rax], %s\n", registers[i]);
         }
 
         for (int i=0; i<node->lhs->n_children; i++) {
@@ -244,7 +260,11 @@ void gen(Node *node) {
         if (step != 1) {
             printf("    imul rdi, %d\n", step);
         }
-        printf("    add rax, rdi\n");
+        if (node->ty.ty != T_ARRAY) {
+            printf("    add rax, rdi\n");
+        } else {
+            printf("    sub rax, rdi\n");
+        }
         break;
     }
     case ND_SUB: {
@@ -252,7 +272,11 @@ void gen(Node *node) {
         if (step != 1) {
             printf("    imul rdi, %d\n", step);
         }
-        printf("    sub rax, rdi\n");
+        if (node->ty.ty != T_ARRAY) {
+            printf("    sub rax, rdi\n");
+        } else {
+            printf("    add rax, rdi\n");
+        }
         break;
     }
     case ND_MUL:
