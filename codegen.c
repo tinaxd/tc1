@@ -91,7 +91,15 @@ void gen(Node *node) {
 
         printf("    pop rdi\n");
         printf("    pop rax\n");
-        printf("    mov DWORD PTR [rax], edi\n");
+        switch (node->lhs->ty.ty) {
+        case T_PTR:
+        case T_ARRAY:
+            printf("    mov QWORD PTR [rax], rdi\n");
+            break;
+        case T_INT:
+            printf("    mov DWORD PTR [rax], edi\n");
+            break;
+        }
         printf("    push rdi\n");
         return;
     case ND_RETURN:
@@ -208,7 +216,7 @@ void gen(Node *node) {
         printf("    mov rbp, rsp\n");
 
         // count the number of LVars
-        int offset = 0;
+        int offset = 8;
         for (LVar *var=locals; var; var=var->next) {
             offset += calculate_offset(var->ty);
         }
@@ -260,11 +268,8 @@ void gen(Node *node) {
         if (step != 1) {
             printf("    imul rdi, %d\n", step);
         }
-        if (node->ty.ty != T_ARRAY) {
-            printf("    add rax, rdi\n");
-        } else {
-            printf("    sub rax, rdi\n");
-        }
+        printf("    add rax, rdi\n");
+        break;
         break;
     }
     case ND_SUB: {
@@ -272,11 +277,7 @@ void gen(Node *node) {
         if (step != 1) {
             printf("    imul rdi, %d\n", step);
         }
-        if (node->ty.ty != T_ARRAY) {
-            printf("    sub rax, rdi\n");
-        } else {
-            printf("    add rax, rdi\n");
-        }
+        printf("    sub rax, rdi\n");
         break;
     }
     case ND_MUL:

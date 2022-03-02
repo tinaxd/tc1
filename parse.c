@@ -158,7 +158,7 @@ static void register_new_lvar_str(char *name, int len, Type ty) {
     var->len = len;
     if (locals == NULL) {
         // first LVar
-        var->offset = 0;
+        var->offset = 8;
     } else {
         int max_offset = 0;
         for (LVar *other=var->next; other; other=other->next) {
