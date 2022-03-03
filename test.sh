@@ -62,7 +62,7 @@ assert 3 "int main() {int i; for(i=0; i<10; i=i+1) { int a; a = i + 3; return a;
 assert 15 "int main() {int sum; int i; sum = 0; for(i=1; i<=5; i=i+1) sum = sum + i; return sum;}"
 assert 15 "int main() {int sum; int i; sum = 0; i = 1; while (i <= 5) { sum = sum + i; i = i+1; } return sum;}"
 assert 2 "int main() {int i; int a; for (i=1; i<=10; i=i+1) {a = i+1; return a;}}"
-assert 100 "int main() {int i; int a; for (i=1; i<=10; i=i+1) {a = 1; if (a == 2) return a;} return 100;}"
+assert 100 "int main() {int i; int a; for (i=1; i<=3; i=i+1) {a = 1; if (a == 2) return a;} return 100;}"
 assert 2 "int main() {int i; int a; for (i=1; i<=10; i=i+1) {a = i; if (a == 2) return a;} return 100;}"
 assert 1 "int main() {int i; int a; for (i=1; i<=10; i=i+1) {a = i+1; if (a == 2) return i;} return 100;}"
 assert 0 "int main() {foo(); return 0;}"
@@ -97,5 +97,7 @@ assert 5 "int main() {int a[2]; *(a+1)=4; return *(a+1)+1; }"
 assert 5 "int main() {int a[2]; *(a+1)=4; *a=3; return *(a+1)+1; }"
 assert 5 "int main() {int a[2]; *a=4; *(a+1)=3; return (*a)+1; }"
 assert 3 "int main() {int a[2]; *a=1; *(a+1)=2; return *a + *(a+1); }"
+assert 0 "int main() {int a[10]; int i; for(i=0; i<10; i=i+1) {*(a+i)=i;} return 0;}"
+assert 45 "int main() {int a[10]; int i; for(i=0; i<10; i=i+1) {*(a+i)=i;} int sum; sum=0;for(i=0; i<10; i=i+1) sum = sum+ (*(a+i)); return sum;}"
 
 echo OK

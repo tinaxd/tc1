@@ -158,14 +158,16 @@ static void register_new_lvar_str(char *name, int len, Type ty) {
     var->len = len;
     if (locals == NULL) {
         // first LVar
-        var->offset = 8;
+        var->offset = calculate_offset(ty);
     } else {
         int max_offset = 0;
+        LVar *that = NULL;
         for (LVar *other=var->next; other; other=other->next) {
             if (other->funcname_len == current_function.len
                 && memcmp(other->funcname, current_function.funcname, current_function.len) == 0) {
-                    if (max_offset < other->offset) {
+                    if (max_offset <= other->offset) {
                         max_offset = other->offset;
+                        that = other;
                     }
                 }
         }

@@ -216,7 +216,7 @@ void gen(Node *node) {
         printf("    mov rbp, rsp\n");
 
         // count the number of LVars
-        int offset = 8;
+        int offset = 0;
         for (LVar *var=locals; var; var=var->next) {
             offset += calculate_offset(var->ty);
         }
