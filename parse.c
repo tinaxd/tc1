@@ -474,29 +474,19 @@ Node *relational() {
     }
 }
 
-static Type compute_add_type(Type *t1, Type *t2) {
+static Type compute_add_type(Type t1, Type t2) {
     Type ty;
-    if (t1->ty == T_ARRAY) {
-        // t2->ty = T_ARRAY;
-        // t2->array_size = t1->array_size;
-        // t2->ptr_to = t1->ptr_to;
-        memcpy(&ty, t1, sizeof(Type));
+    if (t1.ty == T_ARRAY) {
+        memcpy(&ty, &t1, sizeof(Type));
         return ty;
-    } else if (t2->ty == T_ARRAY) {
-        // t1->ty = T_ARRAY;
-        // t1->array_size = t2->array_size;
-        // t1->ptr_to = t2->ptr_to;
-        memcpy(&ty, t2, sizeof(Type));
+    } else if (t2.ty == T_ARRAY) {
+        memcpy(&ty, &t2, sizeof(Type));
         return ty;
-    } else if (t1->ty == T_PTR) {
-        // t2->ty = T_PTR;
-        // t2->ptr_to = t1->ptr_to;
-        memcpy(&ty, t1, sizeof(Type));
+    } else if (t1.ty == T_PTR) {
+        memcpy(&ty, &t1, sizeof(Type));
         return ty;
-    } else if (t2->ty == T_PTR) {
-        // t1->ty = T_PTR;
-        // t1->ptr_to = t2->ptr_to;
-        memcpy(&ty, t2, sizeof(Type));
+    } else if (t2.ptr_to == T_PTR) {
+        memcpy(&ty, &t2, sizeof(Type));
         return ty;
     }
     ty.ty = T_INT;
@@ -509,11 +499,11 @@ Node *add() {
     while (true) {
         if (consume("+")) {
             Node *m = mul();
-            node = new_node_with_ty(ND_ADD, node, m, compute_add_type(&node->ty, &m->ty));
+            node = new_node_with_ty(ND_ADD, node, m, compute_add_type(node->ty, m->ty));
             // node = new_node_with_ty(ND_ADD, node, m, node->ty);
         } else if (consume("-")) {
             Node *m = mul();
-            node = new_node_with_ty(ND_SUB, node, m, compute_add_type(&node->ty, &m->ty));
+            node = new_node_with_ty(ND_SUB, node, m, compute_add_type(node->ty, m->ty));
             // node = new_node_with_ty(ND_SUB, node, m, node->ty);
         } else {
             return node;
@@ -592,7 +582,7 @@ Node *subscript() {
     if (consume("[")) {
         Node *index = expr();
         expect("]");
-        Node *add = new_node_with_ty(ND_ADD, p, index, p->ty);
+        Node *add = new_node_with_ty(ND_ADD, p, index, compute_add_type(p->ty, index->ty));
         Node *deref = new_node_with_ty(ND_DEREF, add, NULL, *add->ty.ptr_to);
         return deref;
     } else {

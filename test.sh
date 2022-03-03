@@ -107,5 +107,9 @@ assert 5 "int main() {int a[2]; *(1+a)=4; return *(1+a)+1; }"
 assert 5 "int main() {int a[2]; *(1+a)=4; *a=3; return *(1+a)+1; }"
 assert 5 "int main() {int a[2]; *a=4; *(1+a)=3; return (*a)+1; }"
 assert 3 "int main() {int a[2]; *a=1; *(1+a)=2; return *a + *(1+a); }"
+assert 5 "int main() {int a[2]; 1[a]=4; return 1[a]+1; }"
+assert 5 "int main() {int a[2]; 1[a]=4; 0[a]=3; return 1[a]+1; }"
+assert 5 "int main() {int a[2]; 0[a]=4; 1[a]=3; return 0[a]+1; }"
+assert 3 "int main() {int a[2]; 0[a]=1; 1[a]=2; return 0[a] + 1[a]; }"
 
 echo OK
