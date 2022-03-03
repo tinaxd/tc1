@@ -113,6 +113,7 @@ Node *relational();
 Node *add();
 Node *mul();
 Node *unary();
+Node *subscript();
 Node *primary();
 
 extern Node *code[];

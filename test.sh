@@ -99,5 +99,10 @@ assert 5 "int main() {int a[2]; *a=4; *(a+1)=3; return (*a)+1; }"
 assert 3 "int main() {int a[2]; *a=1; *(a+1)=2; return *a + *(a+1); }"
 assert 0 "int main() {int a[10]; int i; for(i=0; i<10; i=i+1) {*(a+i)=i;} return 0;}"
 assert 45 "int main() {int a[10]; int i; for(i=0; i<10; i=i+1) {*(a+i)=i;} int sum; sum=0;for(i=0; i<10; i=i+1) sum = sum+ (*(a+i)); return sum;}"
+assert 5 "int main() {int a[2]; a[1]=4; return a[1]+1; }"
+assert 5 "int main() {int a[2]; a[1]=4; *a=3; return a[1]+1; }"
+assert 5 "int main() {int a[2]; a[0]=4; a[1]=3; return a[0]+1; }"
+assert 3 "int main() {int a[2]; a[0]=1; a[1]=2; return a[0] + a[1]; }"
+
 
 echo OK

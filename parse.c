@@ -209,7 +209,8 @@ equality   = relational ("==" relational | "!=" relational)*
 relational = add ("<" add | "<=" add | ">" add | ">=" add)*
 add        = mul ("+" mul | "-" mul)*
 mul        = unary ("*" unary | "/" unary)*
-unary      = ("+" | "-")? primary | "*" unary | "&" unary | "sizeof" unary
+unary      = ("+" | "-")? subscript | "*" unary | "&" unary | "sizeof" unary
+subscript  = primary ("[" expr "]")?
 primary    = num | ident ("(" (expr (", expr)*)? ")")? | "(" expr ")"
 */
 
@@ -504,9 +505,9 @@ int calculate_sizeof(Type ty) {
 
 Node *unary() {
     if (consume("+"))
-        return primary();
+        return subscript();
     if (consume("-")) {
-        Node *p = primary();
+        Node *p = subscript();
         return new_node_with_ty(ND_SUB, new_node_num(0), p, p->ty);
     }
     if (consume("*"))
@@ -542,7 +543,21 @@ Node *unary() {
             error("cannot sizeof");
         }
     }
-    return primary();
+    return subscript();
+}
+
+Node *subscript() {
+    Node *p = primary();
+    Node *index;
+    if (consume("[")) {
+        Node *index = expr();
+        expect("]");
+        Node *add = new_node_with_ty(ND_ADD, p, index, p->ty);
+        Node *deref = new_node_with_ty(ND_DEREF, add, NULL, *add->ty.ptr_to);
+        return deref;
+    } else {
+        return p;
+    }
 }
 
 Node *primary() {
