@@ -64,29 +64,32 @@ int calculate_offset(Type ty) {
 void gen(Node *node) {
     switch (node->kind) {
     case ND_NUM:
+        printf("    # ND_NUM\n");
         printf("    push %d\n", node->val);
         return;
     case ND_LVAR:
+        printf("    # ND_LVAR\n");
         gen_lval(node);
-        if (node->ty.ty != T_ARRAY) {
-            printf("    pop rax\n");
-            switch (node->ty.ty) {
-            case T_INT:
-                printf("    push rdi\n");
-                printf("    mov rdi, rax\n");
-                printf("    xor rax, rax\n");
-                printf("    mov eax, DWORD PTR [rdi]\n");
-                printf("    pop rdi\n");
-                break;
-            case T_PTR:
-                printf("    mov rax, [rax]\n");
-                break;
-            }
-            printf("    push rax\n");
+        printf("    pop rax\n");
+        switch (node->ty.ty) {
+        case T_INT:
+            printf("    push rdi\n");
+            printf("    mov rdi, rax\n");
+            printf("    xor rax, rax\n");
+            printf("    mov eax, DWORD PTR [rdi]\n");
+            printf("    pop rdi\n");
+            break;
+        case T_PTR:
+            printf("    mov rax, [rax]\n");
+            break;
         }
+        printf("    push rax\n");
         return;
     case ND_ASSIGN:
+        printf("    # ND_ASSIGN\n");
+        printf("    # ND_ASSIGN lhs\n");
         gen_lval(node->lhs);
+        printf("    # ND_ASSIGN rhs\n");
         gen(node->rhs);
 
         printf("    pop rdi\n");
@@ -103,6 +106,7 @@ void gen(Node *node) {
         printf("    push rdi\n");
         return;
     case ND_RETURN:
+        printf("    # ND_RETURN\n");
         gen(node->lhs);
         printf("    pop rax\n");
         printf("    mov rsp, rbp\n");
@@ -110,7 +114,9 @@ void gen(Node *node) {
         printf("    ret\n");
         return;
     case ND_IF: {
+        printf("    # ND_IF\n");
         // gen condition
+        printf("    # ND_IF condition\n");
         gen(node->children[0]);
         printf("    pop rax\n");
         printf("    cmp rax, 0\n");
@@ -120,7 +126,9 @@ void gen(Node *node) {
             // without else clause
             printf("    je %s\n", end_label);
             // gen statement
+            printf("    # ND_IF then\n");
             gen(node->children[1]);
+            printf("    # ND_IF end\n");
             printf("%s:\n", end_label);
         } else {
             // with else clause
@@ -128,21 +136,27 @@ void gen(Node *node) {
             gen_unique_label(else_label);
             // gen statement
             printf("    je %s\n", else_label);
+            printf("    # ND_IF then\n");
             gen(node->children[1]);
             printf("    jmp %s\n", end_label);
+            printf("    # ND_IF else\n");
             printf("%s:\n", else_label);
             gen(node->children[2]);
+            printf("    # ND_IF end\n");
             printf("%s:\n", end_label);
         }
         return;
     }
     case ND_WHILE: {
+        printf("    # ND_WHILE\n");
         char *begin_label = malloc(10);
         char *end_label = malloc(10);
         gen_unique_label(begin_label);
         gen_unique_label(end_label);
         printf("%s:\n", begin_label);
+        printf("    # ND_WHILE stmt\n");
         gen(node->children[0]);
+        printf("    # ND_WHILE cmp\n");
         printf("    pop rax\n");
         printf("    cmp rax, 0\n");
         printf("    je %s\n", end_label);
@@ -153,25 +167,31 @@ void gen(Node *node) {
         return;
     }
     case ND_FOR: {
+        printf("    # ND_FOR\n");
         char *begin_label = malloc(10);
         char *end_label = malloc(10);
         gen_unique_label(begin_label);
         gen_unique_label(end_label);
         if (node->children[0] != NULL) {
+            printf("    # ND_FOR init\n");
             gen(node->children[0]);
         }
         printf("%s:\n", begin_label);
         if (node->children[1] != NULL) {
+            printf("    # ND_FOR cond\n");
             gen(node->children[1]);
         } else {
+            printf("    # ND_FOR cond (always 1)\n");
             printf("    mov rax, 1\n");
             printf("    push rax\n");
         }
         printf("    pop rax\n");
         printf("    cmp rax, 0\n");
         printf("    je %s\n", end_label);
+        printf("    # ND_FOR stmt\n");
         gen(node->children[3]);
         if (node->children[2] != NULL) {
+            printf("    # ND_FOR step\n");
             gen(node->children[2]);
             printf("    pop rax\n");
         }
@@ -181,8 +201,9 @@ void gen(Node *node) {
     }
     case ND_BLOCK: {
         for (int i=0; i<node->n_children; i++) {
+            printf("    # ND_BLOCK stmt %d\n", i);
             gen(node->children[i]);
-            printf("    pop rax\n");
+            // printf("    pop rax\n");
         }
         return;
     }
