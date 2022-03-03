@@ -285,18 +285,26 @@ void gen(Node *node) {
 
     switch (node->kind) {
     case ND_ADD: {
-        int step = calculate_arithmetic_step(node->lhs->ty);
+        int step = calculate_arithmetic_step(node->ty);
         if (step != 1) {
-            printf("    imul rdi, %d\n", step);
+            if (node->lhs->ty.ty != T_PTR && node->lhs->ty.ty != T_ARRAY) {
+                printf("    imul rax, %d\n", step);
+            } else {
+                printf("    imul rdi, %d\n", step);
+            }
         }
         printf("    add rax, rdi\n");
         break;
         break;
     }
     case ND_SUB: {
-        int step = calculate_arithmetic_step(node->lhs->ty);
+        int step = calculate_arithmetic_step(node->ty);
         if (step != 1) {
-            printf("    imul rdi, %d\n", step);
+            if (node->lhs->ty.ty != T_PTR && node->lhs->ty.ty != T_ARRAY) {
+                printf("    imul rax, %d\n", step);
+            } else {
+                printf("    imul rdi, %d\n", step);
+            }
         }
         printf("    sub rax, rdi\n");
         break;

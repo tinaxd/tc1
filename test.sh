@@ -103,6 +103,9 @@ assert 5 "int main() {int a[2]; a[1]=4; return a[1]+1; }"
 assert 5 "int main() {int a[2]; a[1]=4; *a=3; return a[1]+1; }"
 assert 5 "int main() {int a[2]; a[0]=4; a[1]=3; return a[0]+1; }"
 assert 3 "int main() {int a[2]; a[0]=1; a[1]=2; return a[0] + a[1]; }"
-
+assert 5 "int main() {int a[2]; *(1+a)=4; return *(1+a)+1; }"
+assert 5 "int main() {int a[2]; *(1+a)=4; *a=3; return *(1+a)+1; }"
+assert 5 "int main() {int a[2]; *a=4; *(1+a)=3; return (*a)+1; }"
+assert 3 "int main() {int a[2]; *a=1; *(1+a)=2; return *a + *(1+a); }"
 
 echo OK
