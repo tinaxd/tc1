@@ -30,7 +30,7 @@ void error_at(char *loc, char *fmt, ...) {
 // Advances a token and returns true when the next token is one of expected symbols.
 // Returns false otherwise
 bool consume(char *op) {
-    if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len))
+    if (token->kind != TK_RESERVED || strlen(op) != (size_t)token->len || memcmp(token->str, op, token->len))
         return false;
     token = token->next;
     return true;
@@ -58,7 +58,7 @@ bool consume_kind(TokenKind kind) {
 // Advances a token when the next token is a number.
 // Reports an error otherwise.
 void expect(char *op) {
-    if (token->kind != TK_RESERVED || strlen(op) != token->len || memcmp(token->str, op, token->len))
+    if (token->kind != TK_RESERVED || strlen(op) != (size_t)token->len || memcmp(token->str, op, token->len))
         error_at(token->str, "not '%s'", op);
     token = token->next;
 }
@@ -195,14 +195,16 @@ static void register_new_lvar_str(char *name, int len, Type ty) {
 
 /*
 program    = definition*
-definition = "int" ident ("(" ("int" ident ("," "int" ident)*)? ")")? "{" stmt* "}"
+definition = signature ("(" ("int" ident ("," "int" ident)*)? ")")? "{" stmt* "}"
+           | signature ("[" num "]")? ";"
+signature  = "int" "*"* ident
 stmt       = expr ";"
            | "return" expr ";"
            | "if" "(" expr ")" stmt ("else" stmt)?
            | "while" "(" expr ")" stmt
            | "for (expr?; expr?; expr?) stmt"
            | "{" stmt* "}"
-           | "int" "*"* ident ("[" num "]")? ";"
+           | signature ("[" num "]")? ";"
 expr       = assign
 assign     = equality ("=" assign)?
 equality   = relational ("==" relational | "!=" relational)*
@@ -216,12 +218,81 @@ primary    = num | ident ("(" (expr (", expr)*)? ")")? | "(" expr ")"
 
 Node *code[100];
 
-void program() {
+void program()
+{
     int i = 0;
-    while (!at_eof()) {
+    while (!at_eof())
+    {
         code[i++] = definition();
     }
     code[i] = NULL;
+}
+
+struct SignatureResult
+{
+    Token *ident;
+    Type type;
+};
+
+bool signature(struct SignatureResult *result)
+{
+    if (consume("int"))
+    {
+        // count the number of stars
+        int n_stars = 0;
+        while (consume("*"))
+        {
+            n_stars++;
+        }
+
+        Token *tok = expect_ident();
+
+        // array check
+        int is_array = 0;
+        int array_size = 0;
+        if (consume("["))
+        {
+            array_size = expect_number();
+            expect("]");
+            is_array = 1;
+        }
+
+        expect(";");
+
+        // construct the type based on the number of stars
+        Type *p_ty = NULL;
+        for (int i = 0; i < n_stars + 1; i++)
+        {
+            if (p_ty == NULL)
+            {
+                p_ty = malloc(sizeof(Type));
+                p_ty->ty = T_INT;
+            }
+            else
+            {
+                Type *old_p_ty = p_ty;
+                p_ty = malloc(sizeof(Type));
+                p_ty->ty = T_PTR;
+                p_ty->ptr_to = old_p_ty;
+            }
+        }
+        if (is_array)
+        {
+            Type *old_p_ty = p_ty;
+            p_ty = malloc(sizeof(Type));
+            p_ty->ty = T_ARRAY;
+            p_ty->ptr_to = old_p_ty;
+            p_ty->array_size = array_size;
+        }
+        Type ty = *p_ty;
+        free(p_ty);
+        p_ty = NULL;
+
+        result->ident = tok;
+        result->type = ty;
+        return true;
+    }
+    return false;
 }
 
 Node *definition() {
@@ -364,56 +435,21 @@ Node *stmt() {
             node->children[n_stmts++] = stmt();
         }
         node->n_children = n_stmts;
-    } else if (consume("int")) {
-        // count the number of stars
-        int n_stars = 0;
-        while (consume("*")) {
-            n_stars++;
+    }
+    else
+    {
+        struct SignatureResult sig;
+        if (signature(&sig))
+        {
+            register_new_lvar(sig.ident, sig.type);
+            node = calloc(1, sizeof(Node));
+            node->kind = ND_EMPTY;
         }
-
-        Token *tok = expect_ident();
-
-        // array check
-        int is_array = 0;
-        int array_size = 0;
-        if (consume("[")) {
-            array_size = expect_number();
-            expect("]");
-            is_array = 1;
+        else
+        {
+            node = expr();
+            expect(";");
         }
-
-        expect(";");
-
-        // construct the type based on the number of stars
-        Type *p_ty = NULL;
-        for (int i=0; i<n_stars+1; i++) {
-            if (p_ty == NULL) {
-                p_ty = malloc(sizeof(Type));
-                p_ty->ty = T_INT;
-            } else {
-                Type *old_p_ty = p_ty;
-                p_ty = malloc(sizeof(Type));
-                p_ty->ty = T_PTR;
-                p_ty->ptr_to = old_p_ty;
-            }
-        }
-        if (is_array) {
-            Type *old_p_ty = p_ty;
-            p_ty = malloc(sizeof(Type));
-            p_ty->ty = T_ARRAY;
-            p_ty->ptr_to = old_p_ty;
-            p_ty->array_size = array_size;
-        }
-        Type ty = *p_ty;
-        free(p_ty);
-        p_ty = NULL;
-
-        register_new_lvar(tok, ty);
-        node = calloc(1, sizeof(Node));
-        node->kind = ND_EMPTY;
-    } else {
-        node = expr();
-        expect(";");
     }
 
     return node;
@@ -485,7 +521,7 @@ static Type compute_add_type(Type t1, Type t2) {
     } else if (t1.ty == T_PTR) {
         memcpy(&ty, &t1, sizeof(Type));
         return ty;
-    } else if (t2.ptr_to == T_PTR) {
+    } else if (t2.ty == T_PTR) {
         memcpy(&ty, &t2, sizeof(Type));
         return ty;
     }
@@ -530,6 +566,9 @@ int calculate_sizeof(Type ty) {
         return 4;
     case T_PTR:
         return 8;
+    case T_ARRAY:
+        // TODO:
+        return 0;
     }
 }
 
@@ -750,14 +789,12 @@ Token *tokenize(char *p) {
         }
 
         // LVar
-        char name[100];
         int i = 0;
         char *firstP = p;
         while ((i == 0 && 'a' <= *p && *p <= 'z') || (i != 0 && is_alnum(*p))) {
-            name[i++] = *p;
+            i++;
             p++;
         }
-        name[i] = '\0';
         if (i != 0) {
             cur = new_token(TK_IDENT, cur, firstP, i);
             continue;
