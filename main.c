@@ -20,6 +20,8 @@ int main(int argc, char **argv) {
     program();
 
     printf(".intel_syntax noprefix\n");
+    printf(".section .note.GNU-stack\n");
+    printf(".section .text\n");
     printf(".globl main\n");
 
     for (int i=0; code[i]; i++) {
