@@ -15,6 +15,13 @@ static void gen_lval(Node *node) {
         printf("    sub rax, %d\n", node->offset);
         printf("    push rax\n");
         return;
+    case ND_GVAR:
+        char gname[100];
+        memcpy(gname, node->gname, node->gname_len);
+        gname[node->gname_len] = '\0';
+        printf("    lea rax, %s[rip]\n", gname);
+        printf("    push rax\n");
+        return;
     case ND_DEREF:
         switch (node->lhs->ty.ty) {
         case T_ARRAY:
@@ -83,6 +90,13 @@ void gen(Node *node) {
             printf("    mov rax, [rax]\n");
             break;
         }
+        printf("    push rax\n");
+        return;
+    case ND_GVAR:
+        printf("    # ND_GVAR\n");
+        gen_lval(node);
+        printf("    pop rax\n");
+        printf("    mov rax, [rax]\n");
         printf("    push rax\n");
         return;
     case ND_ASSIGN:
@@ -275,7 +289,29 @@ void gen(Node *node) {
         return;
     case ND_EMPTY:
         return;
+    case ND_ADD:
+    case ND_SUB:
+    case ND_MUL:
+    case ND_DIV:
+    case ND_LT:
+    case ND_LE:
+    case ND_EQ:
+    case ND_NEQ:
+        goto SWITCH_END;
+    case ND_GVAR_DECL:
+        char gname[100];
+        memcpy(gname, node->gname, node->gname_len);
+        gname[node->gname_len] = 0;
+        printf("%s:\n", gname);
+        printf("\t.zero %d\n", calculate_sizeof(node->ty));
+        return;
+    default:
+        // unknown node
+        // show error to stderr and exit
+        fprintf(stderr, "unknown node kind: %d\n", node->kind);
+        exit(1);
     }
+    SWITCH_END:
 
     gen(node->lhs);
     gen(node->rhs);

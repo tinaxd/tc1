@@ -47,6 +47,8 @@ typedef enum {
     ND_ADDR, // &
     ND_EMPTY, // lvar declaration
     ND_LVAR, // local variable
+    ND_GVAR, // global variable
+    ND_GVAR_DECL, // global variable declaration
 } NodeKind;
 
 struct Type {
@@ -73,6 +75,8 @@ struct Node {
     int parameters_len[6];
     int n_parameters;
     Type ty;
+    char *gname; // when ND_GVAR
+    int gname_len; // when ND_GVAR
 };
 
 typedef struct LVar LVar;
@@ -87,7 +91,17 @@ struct LVar {
     Type ty;
 };
 
+typedef struct GVar GVar;
+
+struct GVar {
+    GVar *next;
+    char *name;
+    int len;
+    Type ty;
+};
+
 extern LVar *locals;
+extern GVar *globals;
 
 // input program
 extern char *user_input;
@@ -123,4 +137,9 @@ extern Node *code[];
 LVar *find_lvar(Token *tok, const char *funcname, int funcname_len);
 LVar *find_lvar_str(const char *name, const char *funcname, int funcname_len); // null-terminated string
 
+void register_gvar(const char *name, int name_len, Type ty);
+Node *new_node_gvar(Token *tok);
+GVar *find_gvar_str(const char *name);
+
 int calculate_offset(Type ty);
+int calculate_sizeof(Type ty);

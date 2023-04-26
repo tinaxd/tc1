@@ -27,9 +27,11 @@ int main(int argc, char **argv) {
     for (int i=0; code[i]; i++) {
         gen(code[i]);
 
-        printf("    mov rsp, rbp\n");
-        printf("    pop rbp\n");
-        printf("    ret\n");
+        if (code[i]->kind != ND_GVAR_DECL) {
+            printf("    mov rsp, rbp\n");
+            printf("    pop rbp\n");
+            printf("    ret\n");
+        }
     }
     return 0;
 }

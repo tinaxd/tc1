@@ -4,6 +4,11 @@ assert() {
     input="$2"
 
     ./tc1 "$input" > tmp.s
+    if [ $? -ne 0 ]; then
+        echo "compile error"
+        echo "$input"
+        exit 1
+    fi
     cc -o tmp tmp.s library.o
     ./tmp
     actual="$?"

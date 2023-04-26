@@ -127,6 +127,7 @@ Node *new_node_num(int val) {
     return node;
 }
 
+// returns NULL on lvar not found.
 Node *new_node_lvar(Token *tok) {
     Node *node = calloc(1, sizeof(Node));
     node->kind = ND_LVAR;
@@ -136,10 +137,7 @@ Node *new_node_lvar(Token *tok) {
         node->offset = var->offset;
         node->ty = var->ty;
     } else {
-        char varname[100];
-        memcpy(varname, tok->str, tok->len);
-        varname[tok->len] = 0;
-        error("lvar %s is not declared\n", varname);
+        return NULL;
     }
     // fprintf(stderr, "tok %c offset %d\n", tok->str[0], var->offset);
 
@@ -299,6 +297,19 @@ bool signature(struct SignatureResult *result)
 Node *definition() {
     expect("int");
     Token *ident = expect_ident();
+
+    // if found semicolon, it's a global declaration.
+    if (consume(";")) {
+        Type ty = {.ty = T_INT, .ptr_to=NULL, .array_size=0};
+        register_gvar(ident->str, ident->len, ty);
+        Node *node = malloc(sizeof(Node));
+        node->kind = ND_GVAR_DECL;
+        node->ty = ty;
+        node->gname = ident->str;
+        node->gname_len = ident->len;
+        return node;
+    }
+
     expect("(");
     int n_params = 0;
     char *params[6]; // TODO: 7 or more params
@@ -561,19 +572,6 @@ Node *mul() {
     }
 }
 
-int calculate_sizeof(Type ty) {
-    switch (ty.ty) {
-    case T_INT:
-        return 4;
-    case T_PTR:
-        return 8;
-    case T_ARRAY:
-        // TODO:
-        assert(ty.ptr_to != NULL);
-        return ty.array_size * calculate_sizeof(*ty.ptr_to);
-    }
-}
-
 Node *unary() {
     if (consume("+"))
         return subscript();
@@ -671,8 +669,23 @@ Node *primary() {
         node->n_children = n_arguments;
         return node;
     } else {
-        // local variable
-        return new_node_lvar(ident);
+        // try as local variable
+        Node *lvar_node = new_node_lvar(ident);
+        if (lvar_node != NULL) {
+            return lvar_node;
+        }
+
+        // try as global variable
+        Node *gvar_node = new_node_gvar(ident);
+        if (gvar_node != NULL) {
+            return gvar_node;
+        }
+
+        // variable search failed
+        char name[100];
+        memcpy(name, ident->str, ident->len);
+        name[ident->len] = '\0';
+        error("undefined variable: %s", name);
     }
 }
 

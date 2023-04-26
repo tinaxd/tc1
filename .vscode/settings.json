@@ -1,6 +1,7 @@
 {
     "files.associations": {
-        "string.h": "c"
+        "string.h": "c",
+        "tc1.h": "c"
     },
     "editor.formatOnSave": false
 }
