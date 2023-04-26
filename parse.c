@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <stdbool.h>
 #include <string.h>
+#include <assert.h>
 #include "tc1.h"
 
 void error(char *fmt, ...) {
@@ -568,7 +569,8 @@ int calculate_sizeof(Type ty) {
         return 8;
     case T_ARRAY:
         // TODO:
-        return 0;
+        assert(ty.ptr_to != NULL);
+        return ty.array_size * calculate_sizeof(*ty.ptr_to);
     }
 }
 
