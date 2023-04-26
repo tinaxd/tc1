@@ -113,5 +113,6 @@ assert 5 "int main() {int a[2]; 0[a]=4; 1[a]=3; return 0[a]+1; }"
 assert 3 "int main() {int a[2]; 0[a]=1; 1[a]=2; return 0[a] + 1[a]; }"
 assert 8 "int main() {int a[2]; return sizeof(a);}"
 assert 16 "int main() {int a; int b[3]; return sizeof(a) + sizeof(b); }"
+assert 3 "int glb; int main() {glb = 3; return glb;}"
 
 echo OK
